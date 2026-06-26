@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flora Boutique — Perfumes, Acessórios & Maquiagem</title>
+  <link rel="icon" type="image/x-icon" href="images/logo.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/style.css">
+  <link rel="stylesheet" href="/styles/catalogo.css">
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────── --> 
+  <nav id="navbar">
+    <div class="nav-logo">
+      <a href="#" id="logo-button">
+        <img src="images/flora_logo_inicio.svg" alt="Flora Boutique">
+      </a>
+    </div>
+    <form class="nav-busca-form" id="nav-busca-form" role="search">
+      <input type="text" id="nav-busca-input" placeholder="Buscar produtos..." autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </form>
+    <div class="nav-categorias-wrapper">
+      <button class="nav-categorias-btn" id="categoriasBtn" aria-expanded="false" aria-haspopup="true">
+        Categorias
+        <svg class="cat-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div class="nav-categories-dropdown" id="categoriasDropdown" aria-hidden="true">
+        <ul class="dropdown-list" id="dropdown-categorias-home">
+          <li><a href="produtos.html"><i class="cat-icon">✨</i> Ver todos os produtos</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="atacado.html" id="nav-btn-atacado" class="nav-account-btn" style="text-decoration:none;" title="Comprar em atacado">
+        📦 Atacado
+      </a>
+      <div id="nav-carrinho-slot"></div>
+      <div class="nav-account" id="nav-account">
+        <a href="login.html" class="nav-account-btn" id="nav-account-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span id="nav-account-label">Entrar</span>
+        </a>
+      </div>
+      <div id="theme-button">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+          <span class="theme-icon theme-icon--moon">🌙</span>
+          <span class="theme-icon theme-icon--sun">☀️</span>
+          <span class="theme-toggle__circle"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        Sua <em>essência</em>,<br>nossa paixão
+      </h1>
+      <p class="hero-subtitle">
+        Perfumes exclusivos, maquiagem premium e acessórios que contam a sua história.
+        Desperte o melhor de você com a Flora Boutique.
+      </p>
+     
+    </div>
+  </section>
+
+  <!-- ── MARQUEE ───────────────────────────────────────────── -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-item">Perfumes Importados</span>
+      <span class="marquee-item">Maquiagem Premium</span>
+      <span class="marquee-item">Acessórios Exclusivos</span>
+      <span class="marquee-item">Atacado e Varejo</span>
+      <span class="marquee-item">Frete para toda São luís</span>
+      <span class="marquee-item">Produtos Originais</span>
+      <span class="marquee-item">Perfumes Importados</span>
+      <span class="marquee-item">Maquiagem Premium</span>
+      <span class="marquee-item">Acessórios Exclusivos</span>
+      <span class="marquee-item">Atacado e Varejo</span>
+      <span class="marquee-item">Frete para Toda são luís</span>
+      <span class="marquee-item">Produtos Originais</span>
+    </div>
+  </div>
+
+  <!-- ── CATEGORIES ───────────────────────────────────────── -->
+  <section class="categories" id="categorias">
+    <div class="section-header reveal">
+      <h2 class="section-title">Nossas <em>categorias</em></h2>
+    </div>
+    <div class="categories-grid" id="grid-categorias-home">
+      <p class="catalogo-loading">Carregando categorias...</p>
+    </div>
+  </section>
+
+  <!-- ── FEATURED PRODUCTS ────────────────────────────────── -->
+  <section class="featured" id="destaques">
+    <div class="section-header-feat">
+      <h1 class="section-eyebrow1">Os mais amados</h1>
+      <h2 class="section-title2">Destaques da semana</h2>
+    </div>
+    <div class="products-grid" id="grid-destaques">
+      <p class="catalogo-loading" style="padding: 2rem;">Carregando destaques...</p>
+    </div>
+  </section>
+
+  <!-- ── HIGHLIGHT ─────────────────────────────────────────── -->
+  <section class="highlight" id="sobre">
+    <div class="highlight-inner" id="highlight-conteudo">
+      <p class="catalogo-loading">Carregando...</p>
+    </div>
+    <div class="highlight-nav" id="highlight-nav" style="display:none;">
+      <button class="highlight-nav-btn" id="highlight-prev" aria-label="Produto anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="highlight-nav-contador" id="highlight-contador"></span>
+      <button class="highlight-nav-btn" id="highlight-next" aria-label="Próximo produto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="carousel-section">
+    <div class="section-header-car" style="padding-top:3rem;">
+      <span class="section-eyebrow7">Nossa galeria</span>
+      <h2 class="section-title7">Looks que <em>inspiram</em></h2>
+    </div>
+    <div class="carousel-track-wrapper">
+      <div class="carousel-track" id="carouselTrack">
+        <!-- Fotos originais -->
+        <div class="carousel-card"><img src="images/look_rosa.jpeg" alt="Look Rosa" /></div>
+        <div class="carousel-card"><img src="images/look_amarelo.jpeg" alt="Look Amarelo" /></div>
+        <div class="carousel-card"><img src="images/look_vinho.jpeg" alt="Look Vinho" /></div>
+        <div class="carousel-card"><img src="images/look_branco.jpeg" alt="Look Branco" /></div>
+        <!-- Duplicatas para loop infinito -->
+        <div class="carousel-card"><img src="images/look_rosa.jpeg" alt="Look Rosa" /></div>
+        <div class="carousel-card"><img src="images/look_amarelo.jpeg" alt="Look Amarelo" /></div>
+        <div class="carousel-card"><img src="images/look_vinho.jpeg" alt="Look Vinho" /></div>
+        <div class="carousel-card"><img src="images/look_branco.jpeg" alt="Look Branco" /></div>
+      </div>
+    </div>
+    <div class="carousel-controls">
+      <button class="carousel-btn carousel-btn--prev" id="btnPrev">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Anterior
+      </button>
+      <button class="carousel-btn carousel-btn--next" id="btnNext">
+        Próximo
+        <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+    </div>
+  </section>
+  <!-- ── NEWSLETTER ────────────────────────────────────────── -->
+  <section class="newsletter" id="contato">
+    <div class="newsletter-content reveal">
+      <span class="section-eyebrow4">Fique por dentro</span>
+      <h2 class="newsletter-title">Receba novidades<br>em primeira mão</h2>
+      <p class="newsletter-text">Promoções exclusivas, lançamentos e dicas de beleza diretamente no seu WhatsApp.</p>
+      <div class="newsletter-form">
+        <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" id="email-input">
+        <button class="newsletter-btn" onclick="handleNewsletter()">Quero receber</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <img src="WhatsApp_Image_2026-06-08_at_22_37_26.jpeg" alt="Flora Boutique" onerror="this.style.display='none'">
+          <span class="footer-logo-name">Flora Boutique</span>
+        </div>
+        <p class="footer-desc">
+          Perfumes, maquiagem e acessórios premium para quem valoriza elegância e qualidade.
+          Atendemos no varejo e atacado em todo o Brasil.
+        </p>
+        <div class="footer-social">
+          <a href="#" class="social-btn" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+          </a>
+          <a href="https://wa.me/5598984853656?text=Boa%20noite" class="social-btn" aria-label="WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.833L.057 23.215a.75.75 0 0 0 .916.932l5.546-1.43A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.7-.5-5.253-1.375l-.372-.215-3.892 1.004 1.028-3.773-.23-.38A9.956 9.956 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Categorias</h4>
+        <ul id="footer-categorias-lista">
+          <li><a href="produtos.html">Ver catálogo</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Institucional</h4>
+        <ul>
+          <li><a href="index.html#sobre">Sobre nós</a></li>
+          <li><a href="atacado.html">Atacado</a></li>
+          <li><a href="cadastro.html">Seja revendedora</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Atendimento</h4>
+        <ul>
+          <li><a href="https://wa.me/5598984853656?text=Boa%20noite">WhatsApp</a></li>
+          <li><a href="perfil.html">Minha Conta</a></li>
+          <li><a href="carrinho.html">Meu Carrinho</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Flora Boutique — Atacado e Varejo. Todos os direitos reservados.</p>
+      <div class="footer-payment">
+        <span class="pay-badge">PIX</span>
+        <span class="pay-badge">CRÉDITO</span>
+        <span class="pay-badge">BOLETO</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── WHATSAPP FAB ──────────────────────────────────────── -->
+  <a href="https://wa.me/5598984853656" class="whatsapp-btn" target="_blank" title="Fale no WhatsApp">💬</a>
+
+  <div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+  </div>
+
+  <script src="/services/script.js"></script>
+  <script type="module" src="/services/nav-conta.js"></script>
+  <script type="module" src="/services/nav-carrinho.js"></script>
+  <script type="module" src="/services/nav-atacado-visibilidade.js"></script>
+  <script type="module" src="/services/registrar-visita-auto.js"></script>
+  <script type="module" src="/services/nav-categorias-home.js"></script>
+  <script type="module" src="/services/home-dinamica.js"></script>
+  <script src="/services/nav-busca.js"></script>
+</body>
+</html>

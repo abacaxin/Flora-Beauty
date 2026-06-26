@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Montserrat", sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url("../images/fundo_login.jpeg");
+    background-size: contain;
+    background-position: center;
+}
+
+.container {
+    width: 420px;
+    background-color: transparent;
+    border: 2px solid rgba(255,255,255,.2);
+    border-radius: 10px;
+    color: #535151;
+    padding: 30px 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .6);
+    backdrop-filter: blur(20px);
+}
+
+.container h1 {
+    font-size: 36px;
+    text-align: center;
+    color: rgb(54, 53, 53);
+}
+
+.input-box{
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin: 30px 0;
+}
+
+.input-box input {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: 2px solid rgba(43, 36, 36, 0.788);
+    border-radius: 40px;
+    outline: none;
+    font-size: 16px;
+    color: #fff;
+    padding: 20px 45px 20px 20px;
+}
+
+.input-box input::placeholder {
+    color: #0e0a0a;
+}
+
+.input-box i {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    margin: -15px  0 15px;
+}
+
+.remember-forgot label input {
+    accent-color: #5f5c5c;
+    margin-right: 5px;
+}
+
+.remember-forgot a {
+    text-decoration: none;
+    color: #1f1616;
+}
+
+.remember-forgot a:hover {
+    text-decoration: underline;
+}
+
+.login {
+    width: 100%;
+    height: 50px;
+    background-color: #fff;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+    box-shadow:  0 0 10px rgba(0, 0, 0, .1);
+    margin-top: 20px;
+}
+
+.login:hover {
+    background-color: transparent;
+    border: 2px solid rgb(255,255,255, .2);
+    color: #5f5c5c;
+    transition: 0.5s;
+}
+
+.register-link {
+    font-size: 14px;
+    text-align: center;
+    margin: 20px 0 15px;
+}
+
+.register-link a {
+    text-decoration: none;
+    color: #1f1616;
+    font-weight: 600;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+.form-msg {
+    min-height: 20px;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 8px;
+    color: #b02a2a;
+}
+
+.form-msg.sucesso {
+    color: #2a7a3a;
+}
+
+.login:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.voltar-link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #1f1616;
+    text-decoration: none;
+}
+
+.voltar-link:hover {
+    text-decoration: underline;
+}
+
+.tipo-conta-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.tipo-conta-btn {
+    flex: 1;
+    padding: 0.6rem;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+    background: transparent;
+    color: #1f1616;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.tipo-conta-btn.active {
+    background: #1f1616;
+    color: #fff;
+    border-color: #1f1616;
+}
+
+.tipo-conta-info {
+    font-size: 12px;
+    color: #6b6b6b;
+    text-align: center;
+    margin-bottom: 1rem;
+    min-height: 16px;
+}
+
+.cnpj-status {
+    font-size: 12px;
+    margin: -4px 0 12px 4px;
+    min-height: 14px;
+}
+
+.cnpj-status.mei {
+    color: #2a7a3a;
+}
+
+.cnpj-status.empresa {
+    color: #1f6fa8;
+}
+
+.cnpj-status.verificando {
+    color: #6b6b6b;
+}
+
+.cnpj-status.indisponivel {
+    color: #9a8a3a;
+}

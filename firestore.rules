@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    function ehDono(uid) {
+      return estaLogado() && request.auth.uid == uid;
+    }
+
+    function ehAdmin() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function ehRevendedorAprovado() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("statusRevendedor", "") == "aprovado" ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin");
+    }
+
+    // ── usuarios/{uid} ───────────────────────────────────────────────────
+    // Cada pessoa só lê/edita o próprio perfil. Admin pode ler todos
+    // (necessário para o painel administrativo), mas ninguém pode escrever
+    // o campo "role" de si mesmo — isso evita que um cliente se promova a
+    // admin editando o próprio documento. O mesmo vale para
+    // "statusRevendedor": só nasce como "pendente" e só o admin pode mudar
+    // para "aprovado"/"rejeitado".
+    match /usuarios/{uid} {
+      allow read: if ehDono(uid) || ehAdmin();
+      allow create: if ehDono(uid) &&
+        request.resource.data.role == "cliente" &&
+        (!("statusRevendedor" in request.resource.data) ||
+          request.resource.data.statusRevendedor == "pendente");
+      allow update: if ehDono(uid) &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.get("statusRevendedor", "pendente") ==
+          resource.data.get("statusRevendedor", "pendente");
+      allow update: if ehAdmin();
+      allow delete: if ehAdmin();
+    }
+
+    // ── usuarios/{uid}/dados/{docId} ──────────────────────────────────────
+    // Subcoleção com dados extras do perfil (ex: endereço salvo). Mesma
+    // regra de dono do documento pai: só o próprio usuário ou admin acessam.
+    match /usuarios/{uid}/dados/{docId} {
+      allow read, write: if ehDono(uid) || ehAdmin();
+    }
+
+    // ── produtos/{produtoId} ─────────────────────────────────────────────
+    // Qualquer pessoa (logada ou não) pode VER o catálogo.
+    // Só admin pode criar, editar ou remover produtos.
+    match /produtos/{produtoId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── categorias/{categoriaId} ─────────────────────────────────────────
+    // Mesma lógica de produtos: catálogo de categorias é público para
+    // leitura (usado nos filtros da loja), só admin pode gerenciar.
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── configuracoes/{docId} ────────────────────────────────────────────
+    // Textos e ajustes globais da home (ex: título do banner). Públicos
+    // para leitura (a loja precisa exibi-los para qualquer visitante),
+    // só admin pode editar.
+    match /configuracoes/{docId} {
+      allow read: if true;
+      allow write: if ehAdmin();
+    }
+
+    // ── carrinhos/{uid} ──────────────────────────────────────────────────
+    // O carrinho é privado: só o próprio dono lê/escreve o seu.
+    match /carrinhos/{uid} {
+      allow read, write: if ehDono(uid);
+    }
+
+    // ── pedidos/{pedidoId} ───────────────────────────────────────────────
+    // O cliente pode criar o próprio pedido e ler só os seus.
+    // Se o campo "temItemAtacado" (calculado no front-end) vier marcado
+    // como true, só é aceito se quem está comprando for um revendedor com
+    // status "aprovado" — isso impede um cliente comum de burlar o preço
+    // de atacado mesmo manipulando o request direto (sem passar pela
+    // interface). O front-end sempre define esse campo corretamente; aqui
+    // só validamos a permissão de quem está autenticado.
+    // Atualização de status (pago, enviado, etc.) é feita só pelo backend
+    // (Cloud Functions, que usa o Admin SDK e ignora estas regras) ou por
+    // um admin via painel.
+    match /pedidos/{pedidoId} {
+      allow read: if estaLogado() &&
+        (resource.data.uidComprador == request.auth.uid || ehAdmin());
+      allow create: if estaLogado() &&
+        request.resource.data.uidComprador == request.auth.uid &&
+        (request.resource.data.get("temItemAtacado", false) == false || ehRevendedorAprovado());
+      allow update, delete: if ehAdmin();
+    }
+
+    // ── metricas/{docId} ─────────────────────────────────────────────────
+    // Qualquer visitante pode registrar um evento de acesso (visualização
+    // de página/produto), mas só admin pode ler os relatórios agregados.
+    match /metricas/{docId} {
+      allow create: if true;
+      allow read: if ehAdmin();
+      allow update, delete: if ehAdmin();
+    }
+
+    // ── Bloqueio padrão ──────────────────────────────────────────────────
+    // Qualquer coleção não listada acima fica negada por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

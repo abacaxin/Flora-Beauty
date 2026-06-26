@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos — Flora Boutique</title>
+  <link rel="icon" type="image/x-icon" href="images/logo.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/catalogo.css">
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────── -->
+  <nav id="navbar" class="scrolled">
+    <div class="nav-logo">
+      <a href="index.html" id="logo-button">
+        <img src="images/flora_logo_inicio.svg" alt="Flora Boutique">
+      </a>
+    </div>
+
+    <form class="nav-busca-form" id="nav-busca-form" role="search">
+      <input type="text" id="nav-busca-input" placeholder="Buscar produtos..." autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </form>
+
+    <div class="nav-categorias-wrapper">
+      <button class="nav-categorias-btn" id="categoriasBtn" aria-expanded="false" aria-haspopup="true">
+        Categorias
+        <svg class="cat-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div class="nav-categories-dropdown" id="categoriasDropdown" aria-hidden="true">
+        <ul class="dropdown-list" id="dropdown-categorias-lista">
+          <!-- Preenchido via JS a partir de CATEGORIAS -->
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <a href="atacado.html" id="nav-btn-atacado" class="nav-account-btn" style="text-decoration:none;" title="Comprar em atacado">
+        📦 Atacado
+      </a>
+      <div id="nav-carrinho-slot"></div>
+      <div class="nav-account" id="nav-account">
+        <a href="login.html" class="nav-account-btn" id="nav-account-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span id="nav-account-label">Entrar</span>
+        </a>
+      </div>
+      <div id="theme-button">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+          <span class="theme-icon theme-icon--moon">🌙</span>
+          <span class="theme-icon theme-icon--sun">☀️</span>
+          <span class="theme-toggle__circle"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── CATÁLOGO ─────────────────────────────────────────── -->
+  <main class="catalogo-main">
+    <div class="catalogo-topo">
+      <div class="catalogo-titulo">
+        <h1 id="catalogo-titulo-texto">Todos os produtos</h1>
+        <p id="catalogo-contagem"></p>
+      </div>
+      <div class="catalogo-ordenar">
+        <label for="select-ordenar">Ordenar por</label>
+        <select id="select-ordenar">
+          <option value="relevancia">Mais recentes</option>
+          <option value="menor-preco">Menor preço</option>
+          <option value="maior-preco">Maior preço</option>
+          <option value="nome">Nome (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="catalogo-layout">
+      <aside class="catalogo-filtros">
+        <div class="filtro-grupo">
+          <h3>Categoria</h3>
+          <button class="filtro-categoria-item active" data-categoria="">Todas</button>
+          <div id="filtro-categorias-lista"></div>
+        </div>
+        <div class="filtro-grupo">
+          <h3>Preço</h3>
+          <div class="filtro-preco-inputs">
+            <input type="number" id="filtro-preco-min" placeholder="Mín." min="0">
+            <span>—</span>
+            <input type="number" id="filtro-preco-max" placeholder="Máx." min="0">
+          </div>
+          <button class="filtro-aplicar-btn" id="btn-aplicar-preco">Aplicar</button>
+        </div>
+        <button class="filtro-limpar-btn" id="btn-limpar-filtros">Limpar filtros</button>
+      </aside>
+
+      <section class="catalogo-grid" id="catalogo-grid">
+        <p class="catalogo-loading">Carregando produtos...</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="services/script.js"></script>
+  <script type="module" src="services/nav-conta.js"></script>
+  <script type="module" src="services/nav-carrinho.js"></script>
+  <script type="module" src="services/nav-atacado-visibilidade.js"></script>
+  <script type="module" src="services/registrar-visita-auto.js"></script>
+  <script type="module" src="js/produtos-catalogo.js"></script>
+</body>
+</html>

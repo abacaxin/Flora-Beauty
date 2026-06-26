@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Conta — Flora Boutique</title>
+  <link rel="icon" type="image/x-icon" href="images/logo.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/style.css">
+  <link rel="stylesheet" href="/styles/perfil.css">
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────── -->
+  <nav id="navbar" class="scrolled">
+    <div class="nav-logo">
+      <a href="index.html" id="logo-button">
+        <img src="images/flora_logo_inicio.svg" alt="Flora Boutique">
+      </a>
+    </div>
+    <div class="nav-categorias-wrapper">
+      <a href="index.html" class="nav-categorias-btn" style="text-decoration:none;">
+        ← Voltar para a loja
+      </a>
+    </div>
+    <div class="nav-actions">
+      <div id="nav-carrinho-slot"></div>
+      <div id="theme-button">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+          <span class="theme-icon theme-icon--moon">🌙</span>
+          <span class="theme-icon theme-icon--sun">☀️</span>
+          <span class="theme-toggle__circle"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── MINHA CONTA ──────────────────────────────────────── -->
+  <main class="perfil-main">
+    <div class="perfil-header">
+      <div class="perfil-avatar-wrap">
+        <img id="perfil-avatar-img" class="perfil-avatar" src="" alt="Foto de perfil" style="display:none;">
+        <div id="perfil-avatar-iniciais" class="perfil-avatar-iniciais"></div>
+      </div>
+      <div class="perfil-titulo">
+        <h1 id="perfil-nome-titulo">Minha Conta</h1>
+        <p id="perfil-email-titulo"></p>
+      </div>
+    </div>
+
+    <div class="perfil-tabs">
+      <button class="perfil-tab-btn active" data-tab="dados">Dados pessoais</button>
+      <button class="perfil-tab-btn" data-tab="seguranca">Segurança</button>
+      <button class="perfil-tab-btn" data-tab="enderecos">Endereços</button>
+    </div>
+
+    <!-- Aba: Dados pessoais -->
+    <section class="perfil-painel active" id="painel-dados">
+      <form id="form-dados">
+        <div class="perfil-campo">
+          <label for="campo-nome">Nome completo</label>
+          <input type="text" id="campo-nome" placeholder="Seu nome completo" required>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-email">E-mail</label>
+          <input type="email" id="campo-email" disabled>
+          <small>Para alterar o e-mail, fale com o suporte.</small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-telefone">Celular / WhatsApp</label>
+          <input type="tel" id="campo-telefone" placeholder="(98) 98485-3656" maxlength="15">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-foto">URL da foto de perfil</label>
+          <input type="url" id="campo-foto" placeholder="https://exemplo.com/minha-foto.jpg">
+          <small>Cole o link de uma imagem hospedada na web. Deixe vazio para usar suas iniciais.</small>
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-dados">Salvar alterações</button>
+          <span class="perfil-msg" id="msg-dados"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Aba: Segurança -->
+    <section class="perfil-painel" id="painel-seguranca">
+      <form id="form-senha">
+        <div class="perfil-campo">
+          <label for="campo-senha-atual">Senha atual</label>
+          <input type="password" id="campo-senha-atual" required autocomplete="current-password">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-senha-nova">Nova senha</label>
+          <input type="password" id="campo-senha-nova" required autocomplete="new-password" minlength="6">
+          <small>Mínimo de 6 caracteres.</small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-senha-confirma">Confirme a nova senha</label>
+          <input type="password" id="campo-senha-confirma" required autocomplete="new-password" minlength="6">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-senha">Alterar senha</button>
+          <span class="perfil-msg" id="msg-senha"></span>
+        </div>
+      </form>
+
+      <div class="perfil-zona-perigo">
+        <h3>Sair da conta</h3>
+        <p>Você será desconectado deste dispositivo.</p>
+        <button class="btn-sair-conta" id="btn-logout">Sair da conta</button>
+      </div>
+    </section>
+
+    <!-- Aba: Endereços -->
+    <section class="perfil-painel" id="painel-enderecos">
+      <form id="form-endereco">
+        <div class="perfil-campo">
+          <label for="campo-cep">CEP</label>
+          <input type="text" id="campo-cep" placeholder="65000-000" maxlength="9">
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-endereco">Endereço</label>
+          <input type="text" id="campo-endereco" placeholder="Rua, número, bairro" disabled>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-cidade-uf">Cidade / UF</label>
+          <input type="text" id="campo-cidade-uf" placeholder="Cidade - UF" disabled>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-complemento">Complemento</label>
+          <input type="text" id="campo-complemento" placeholder="Apartamento, bloco, ponto de referência...">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-salvar-endereco">Salvar endereço</button>
+          <span class="perfil-msg" id="msg-endereco"></span>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/services/script.js"></script>
+  <script type="module" src="/services/nav-conta.js"></script>
+  <script type="module" src="/services/nav-carrinho.js"></script>
+  <script type="module" src="./js/perfil.js"></script>
+</body>
+</html>
