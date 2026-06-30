@@ -52,7 +52,7 @@ async function carregarCategoriasNoSelect() {
     return;
   }
   selectCategoria.innerHTML = categoriasCache
-    .map((c) => `<option value="${c.slug}">${c.icone || "🏷️"} ${c.nome}</option>`)
+    .map((c) => `<option value="${c.slug}"> ${c.nome}</option>`)
     .join("");
 }
 

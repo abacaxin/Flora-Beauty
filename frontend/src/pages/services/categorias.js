@@ -52,7 +52,7 @@ export async function listarCategorias() {
  * Lança um erro se já existir uma categoria com o mesmo slug, evitando
  * duas categorias diferentes colidirem no mesmo identificador de filtro.
  */
-export async function criarCategoria({ nome, icone = "🏷️", imagemURL = "" }) {
+export async function criarCategoria({ nome, imagemURL = "" }) {
   const slug = gerarSlug(nome);
 
   const existentes = await listarCategorias();

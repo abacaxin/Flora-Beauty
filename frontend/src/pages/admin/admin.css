@@ -34,6 +34,11 @@ body {
   padding: 0 0.5rem;
 }
 
+.admin_logo_nome {
+   color: var(--gold, #C9A84C);
+   text-decoration: none;
+}
+
 .admin-logo small {
   display: block;
   font-family: 'Jost', sans-serif;

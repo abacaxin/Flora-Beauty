@@ -11,7 +11,6 @@ const form = document.getElementById("form-categoria");
 const modalTitulo = document.getElementById("modal-categoria-titulo");
 const modalMsg = document.getElementById("modal-categoria-msg");
 const inputNome = document.getElementById("cat-nome");
-const inputIcone = document.getElementById("cat-icone");
 const inputImagem = document.getElementById("cat-imagem");
 const btnSalvar = document.getElementById("btn-salvar-categoria");
 
@@ -27,13 +26,12 @@ async function carregarTabela() {
   tabela.innerHTML = `
     <table class="admin-tabela">
       <thead>
-        <tr><th></th><th>Ícone</th><th>Nome</th><th>Identificador (slug)</th><th>Ações</th></tr>
+        <tr><th>Imagem</th><th>Nome</th><th>Identificador (slug)</th><th>Ações</th></tr>
       </thead>
       <tbody>
         ${categoriasCache.map((c) => `
           <tr>
             <td>${c.imagemURL ? `<img class="thumb" src="${c.imagemURL}" alt="">` : "—"}</td>
-            <td style="font-size:1.3rem;">${c.icone || "🏷️"}</td>
             <td>${c.nome}</td>
             <td><code>${c.slug}</code></td>
             <td>
@@ -76,7 +74,6 @@ function abrirModalEdicao(id) {
   limparForm();
   modalTitulo.textContent = "Editar categoria";
   inputNome.value = c.nome;
-  inputIcone.value = c.icone || "";
   inputImagem.value = c.imagemURL || "";
   modal.style.display = "flex";
 }
@@ -112,7 +109,6 @@ form.addEventListener("submit", async (evento) => {
   modalMsg.style.display = "none";
 
   const nome = inputNome.value.trim();
-  const icone = inputIcone.value.trim() || "🏷️";
   const imagemURL = inputImagem.value.trim();
 
   if (!nome) {
@@ -126,9 +122,9 @@ form.addEventListener("submit", async (evento) => {
 
   try {
     if (categoriaEditandoId) {
-      await atualizarCategoria(categoriaEditandoId, { nome, icone, imagemURL });
+      await atualizarCategoria(categoriaEditandoId, { nome, imagemURL });
     } else {
-      await criarCategoria({ nome, icone, imagemURL });
+      await criarCategoria({ nome, imagemURL });
     }
     fecharModal();
     await carregarTabela();
