@@ -11,7 +11,6 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import { auth } from "../services/firebase-config.js";
-
 const form = document.getElementById("form-login");
 const inputEmail = document.getElementById("login-email");
 const inputSenha = document.getElementById("login-senha");
@@ -143,4 +142,22 @@ linkEsqueci.addEventListener("click", async (evento) => {
   } catch (erro) {
     mostrarMensagem(traduzErroAuth(erro.code));
   }
+});
+
+// Funcionalidade de Mostrar / Ocultar Senha
+const toggleSenha = document.getElementById("toggle-senha");
+
+toggleSenha.addEventListener("click", () => {
+  console.log("Toggle senha clicado");
+    if (inputSenha.type === "password") {
+        inputSenha.type = "text";
+        // Muda para o ícone de olho aberto (Solid)
+        toggleSenha.classList.remove("bx-lock");
+        toggleSenha.classList.add("bxs-lock-open-alt");
+    } else {
+        inputSenha.type = "password";
+        // Muda de volta para o olho cortado/fechado (Solid)
+        toggleSenha.classList.remove("bxs-lock-open-alt");
+        toggleSenha.classList.add("bx-lock");
+    }
 });

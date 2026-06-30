@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -12,186 +12,229 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: url("../images/fundo_login.jpeg");
-    background-size: contain;
-    background-position: center;
+    background: url("../images/goldbg.png") no-repeat center center;
+    background-size: cover;
+    padding: 16px; /* Evita que o container cole nas bordas em celulares muito pequenos */
 }
 
 .container {
-    width: 420px;
-    background-color: transparent;
-    border: 2px solid rgba(255,255,255,.2);
-    border-radius: 10px;
-    color: #535151;
-    padding: 30px 40px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .6);
-    backdrop-filter: blur(20px);
+    width: 100%;
+    max-width: 400px; /* Largura ideal para desktop; encolhe perfeitamente no mobile */
+    background-color: rgba(255, 255, 255, 0.15); /* Efeito vidro com contraste melhorado */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    color: #1a1a1a; /* Texto escuro para melhor leitura sobre o fundo claro/dourado */
+    padding: 35px 24px; /* Padding reduzido nas laterais para aproveitar a tela do celular */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    margin: 0 16px;
 }
 
 .container h1 {
-    font-size: 36px;
+    font-size: 32px;
     text-align: center;
-    color: rgb(54, 53, 53);
+    color: #111111;
+    font-weight: 700;
+    margin-bottom: 10px;
 }
 
-.input-box{
+/* Campos de Entrada */
+.input-box {
     position: relative;
     width: 100%;
     height: 50px;
-    margin: 30px 0;
+    margin: 22px 0; /* Espaçamento vertical ligeiramente reduzido para telas menores */
 }
 
 .input-box input {
     width: 100%;
     height: 100%;
-    background-color: transparent;
-    border: 2px solid rgba(43, 36, 36, 0.788);
+    background-color: rgba(255, 255, 255, 0.603); /* Input semi-transparente melhora a leitura do texto */
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 40px;
     outline: none;
-    font-size: 16px;
-    color: #fff;
-    padding: 20px 45px 20px 20px;
+    font-size: 15px;
+    color: #1a1a1a;
+    padding: 0 45px 0 20px;
+    transition: all 0.3s ease;
+}
+
+.input-box input:focus {
+    background-color: #ffffff;
+    border-color: #d4af37; /* Toque dourado premium ao focar no campo */
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 .input-box input::placeholder {
-    color: #0e0a0a;
+    color: #666666;
 }
 
 .input-box i {
     position: absolute;
     right: 20px;
-    top: 50%;
+    top: 50%; 
     transform: translateY(-50%);
-    font-size: 20px;
+    font-size: 18px;
+    color: #444444;   /* Cor ligeiramente mais escura para melhor visibilidade */
+    cursor: pointer;  /* Mostra a "mãozinha" ao passar o mouse */
+    z-index: 2;       /* Garante que o ícone fique por cima do input e seja clicável */
 }
 
+/* Lembrar / Esqueci */
 .remember-forgot {
     display: flex;
     justify-content: space-between;
-    margin: -15px  0 15px;
+    align-items: center;
+    font-size: 14px;
+    margin: -10px 0 25px;
+}
+
+.remember-forgot label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #222222;
 }
 
 .remember-forgot label input {
-    accent-color: #5f5c5c;
-    margin-right: 5px;
+    accent-color: #111111;
+    margin-right: 6px;
 }
 
 .remember-forgot a {
     text-decoration: none;
-    color: #1f1616;
+    color: #111111;
+    font-weight: 500;
+    transition: color 0.3s;
 }
 
 .remember-forgot a:hover {
     text-decoration: underline;
+    color: #d4af37;
 }
 
+/* Botão de Login Principal */
 .login {
     width: 100%;
     height: 50px;
-    background-color: #fff;
-    border: none;
+    background-color: #111111; /* Botão escuro sólido gera contraste marcante */
+    color: #ffffff;
+    border: 1px solid #111111;
     border-radius: 40px;
     cursor: pointer;
     font-size: 16px;
-    color: #333;
     font-weight: 600;
-    box-shadow:  0 0 10px rgba(0, 0, 0, .1);
-    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
 }
 
-.login:hover {
+.login:hover:not(:disabled) {
     background-color: transparent;
-    border: 2px solid rgb(255,255,255, .2);
-    color: #5f5c5c;
-    transition: 0.5s;
+    color: #111111;
+    border-color: #111111;
 }
 
+.login:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Link de Registro */
 .register-link {
     font-size: 14px;
     text-align: center;
-    margin: 20px 0 15px;
+    margin: 25px 0 10px;
+    color: #222222;
 }
 
 .register-link a {
     text-decoration: none;
-    color: #1f1616;
-    font-weight: 600;
+    color: #111111;
+    font-weight: 700;
+    transition: color 0.3s;
 }
 
 .register-link a:hover {
     text-decoration: underline;
+    color: #d4af37;
 }
 
-.form-msg {
-    min-height: 20px;
-    font-size: 13px;
-    text-align: center;
-    margin-top: 8px;
-    color: #b02a2a;
-}
-
-.form-msg.sucesso {
-    color: #2a7a3a;
-}
-
-.login:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-}
-
+/* Links adicionais e Divisores */
 .voltar-link {
     display: block;
     text-align: center;
-    margin-top: 14px;
+    margin-top: 15px;
     font-size: 13px;
-    color: #1f1616;
+    color: #444444;
     text-decoration: none;
+    transition: color 0.3s;
 }
 
 .voltar-link:hover {
     text-decoration: underline;
+    color: #111111;
 }
 
 .divisor-ou {
     display: flex;
     align-items: center;
     text-align: center;
-    margin: 16px 0;
+    margin: 20px 0;
     font-size: 12px;
-    color: #999;
+    color: #555555;
+    font-weight: 500;
 }
 
 .divisor-ou::before,
 .divisor-ou::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.divisor-ou::before { margin-right: 10px; }
-.divisor-ou::after { margin-left: 10px; }
+.divisor-ou::before { margin-right: 12px; }
+.divisor-ou::after { margin-left: 12px; }
 
+/* Botão Google */
 .login-google {
-    background: #fff;
-    color: #1f1616;
-    border: 1px solid rgba(0,0,0,0.2);
+    background: #ffffff;
+    color: #111111;
+    border: 1px solid rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
 }
 
 .login-google:hover {
-    background: #f5f5f5;
+    background: #f9f9f9;
+    border-color: #111111;
 }
 
+/* Mensagens de Feedback */
+.form-msg {
+    min-height: 20px;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 10px;
+    color: #c82333;
+    font-weight: 500;
+}
+
+.form-msg.sucesso {
+    color: #1e7e34;
+}
+
+/* Alertas de Verificação */
 .verificacao-alerta {
-    background: rgba(201, 168, 76, 0.12);
-    border: 1px solid rgba(201, 168, 76, 0.4);
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: #6b5a1f;
-    margin-bottom: 12px;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    color: #5c4b18;
+    margin-bottom: 16px;
     text-align: center;
 }
 
@@ -200,8 +243,28 @@ body {
     margin: 6px auto 0;
     background: none;
     border: none;
-    color: #1f1616;
+    color: #111111;
     text-decoration: underline;
     cursor: pointer;
     font-size: 12px;
+    font-weight: 600;
+}
+
+/* Ajustes finos para Mobile (telas abaixo de 400px de largura) */
+@media (max-width: 400px) {
+    .container {
+        padding: 30px 20px; /* Reduz ligeiramente o espaço interno */
+    }
+    
+    .container h1 {
+        font-size: 28px; /* Título um pouco menor para não quebrar feio */
+    }
+    
+    .remember-forgot {
+        font-size: 12px; /* Ajusta os textos do checkbox/link esqueci a senha */
+    }
+
+    .input-box {
+        margin: 18px 0; /* Encolhe o espaço vertical geral da tela */
+    }
 }
