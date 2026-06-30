@@ -5,11 +5,11 @@
 const paginaAtual = window.location.pathname.split("/").pop().replace(".html", "") || "index";
 
 const itensMenu = [
-  { id: "index", href: "index.html", icone: "📊", label: "Dashboard" },
-  { id: "produtos", href: "produtos.html", icone: "🛍️", label: "Produtos" },
-  { id: "categorias", href: "categorias.html", icone: "🏷️", label: "Categorias" },
-  { id: "pedidos", href: "pedidos.html", icone: "📦", label: "Pedidos" },
-  { id: "revendedores", href: "revendedores.html", icone: "🏪", label: "Revendedores" }
+  { id: "index", href: "index.html", label: "Dashboard" },
+  { id: "produtos", href: "produtos.html", label: "Produtos" },
+  { id: "categorias", href: "categorias.html", label: "Categorias" },
+  { id: "pedidos", href: "pedidos.html", label: "Pedidos" },
+  { id: "revendedores", href: "revendedores.html", label: "Revendedores" }
 ];
 
 function montarSidebar() {
@@ -19,13 +19,13 @@ function montarSidebar() {
   container.innerHTML = `
     <aside class="admin-sidebar">
       <div class="admin-logo">
-        Flora Boutique
+        <a href="../index.html" class="admin_logo_nome">Flora Boutique</a>
         <small>Painel Admin</small>
       </div>
       <nav class="admin-nav">
         ${itensMenu.map((item) => `
           <a href="${item.href}" class="${item.id === paginaAtual ? "active" : ""}">
-            <span>${item.icone}</span> ${item.label}
+            ${item.label}
           </a>
         `).join("")}
       </nav>

@@ -33,7 +33,7 @@ async function carregarCategoriasVisuais() {
         </div>
         <div class="cat-overlay"></div>
         <div class="cat-label">
-          <span class="cat-name">${c.icone || ""} ${c.nome}</span>
+          <span class="cat-name">${c.nome}</span>
         </div>
         <div class="cat-arrow">→</div>
       </a>

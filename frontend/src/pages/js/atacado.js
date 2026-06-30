@@ -22,7 +22,7 @@ function formatarPreco(valor) {
 function renderizarNaoLogado() {
   conteudo.innerHTML = `
     <div style="text-align:center; padding: 6rem 1rem 2rem; max-width: 520px; margin: 0 auto;">
-      <div style="font-size: 2.5rem; margin-bottom: 1rem;">📦</div>
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
       <h1 style="font-family:'Playfair Display', serif; font-size: 1.7rem; margin-bottom: 0.8rem;">
         Área de Atacado
       </h1>
@@ -53,7 +53,7 @@ function renderizarSemAcesso(perfil) {
 
   conteudo.innerHTML = `
     <div style="text-align:center; padding: 6rem 1rem 2rem; max-width: 520px; margin: 0 auto;">
-      <div style="font-size: 2.5rem; margin-bottom: 1rem;">📦</div>
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
       <h1 style="font-family:'Playfair Display', serif; font-size: 1.7rem; margin-bottom: 0.8rem;">
         Área de Atacado
       </h1>
@@ -70,7 +70,7 @@ async function renderizarCatalogoAtacado() {
   conteudo.innerHTML = `
     <div class="catalogo-topo">
       <div class="catalogo-titulo">
-        <h1>📦 Catálogo Atacado</h1>
+        <h1> Catálogo Atacado</h1>
         <p id="atacado-contagem"></p>
       </div>
     </div>

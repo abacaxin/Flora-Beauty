@@ -87,9 +87,9 @@ async function carregarDashboard() {
   document.getElementById("grafico-dispositivo").innerHTML = totalDispositivo === 0
     ? `<p class="admin-vazio">Ainda não há dados suficientes.</p>`
     : `
-      ${renderizarBarra("📱 Mobile", porDispositivo.mobile, totalDispositivo)}
-      ${renderizarBarra("💻 Desktop", porDispositivo.desktop, totalDispositivo)}
-      ${renderizarBarra("📟 Tablet", porDispositivo.tablet, totalDispositivo)}
+      ${renderizarBarra("Mobile", porDispositivo.mobile, totalDispositivo)}
+      ${renderizarBarra("Desktop", porDispositivo.desktop, totalDispositivo)}
+      ${renderizarBarra("Tablet", porDispositivo.tablet, totalDispositivo)}
     `;
 
   // ── Gráfico de origem ─────────────────────────────────────────────────────

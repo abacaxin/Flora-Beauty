@@ -37,11 +37,11 @@ async function montarCategorias() {
   }
 
   filtroCategoriasLista.innerHTML = categoriasCache.map(
-    (cat) => `<button class="filtro-categoria-item" data-categoria="${cat.slug}">${cat.icone || "🏷️"} ${cat.nome}</button>`
+    (cat) => `<button class="filtro-categoria-item" data-categoria="${cat.slug}"> ${cat.nome}</button>`
   ).join("");
 
   dropdownCategoriasLista.innerHTML = categoriasCache.map(
-    (cat) => `<li><a href="produtos.html?categoria=${cat.slug}"><i class="cat-icon">${cat.icone || "🏷️"}</i> ${cat.nome}</a></li>`
+    (cat) => `<li><a href="produtos.html?categoria=${cat.slug}"><i class="cat-icon"></i> ${cat.nome}</a></li>`
   ).join("");
 
   document.querySelectorAll(".filtro-categoria-item").forEach((btn) => {

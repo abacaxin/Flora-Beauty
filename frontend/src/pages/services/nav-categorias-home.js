@@ -7,7 +7,7 @@ if (lista || listaFooter) {
   listarCategorias()
     .then((categorias) => {
       const itensDropdown = categorias.map(
-        (cat) => `<li><a href="produtos.html?categoria=${cat.slug}"><i class="cat-icon">${cat.icone || "🏷️"}</i> ${cat.nome}</a></li>`
+        (cat) => `<li><a href="produtos.html?categoria=${cat.slug}">${cat.nome}</a></li>`
       ).join("");
 
       if (lista) lista.insertAdjacentHTML("afterbegin", itensDropdown);

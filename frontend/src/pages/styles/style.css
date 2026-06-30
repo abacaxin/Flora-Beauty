@@ -129,7 +129,7 @@ nav.scrolled {
   text-decoration: none;
   padding: 0.5rem 0.9rem;
   border-radius: 4px;
-  border: 0.5px solid transparent;
+  border: 1.4px solid #9D7A31;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
   white-space: nowrap;
   max-width: 160px;
@@ -145,6 +145,7 @@ nav.scrolled {
   background: rgba(201, 168, 76, 0.1);
   border-color: rgba(201, 168, 76, 0.3);
   color: var(--gold);
+  border: 1.4px solid #9D7A31;
 }
 
 /* ── NAV CATEGORIAS DROPDOWN ─────────── */
