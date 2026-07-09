@@ -203,10 +203,14 @@ body {
 #tabela-revendedores,
 #tabela-categorias,
 #lista-paginas,
-#lista-pedidos-recentes {
+#lista-pedidos-recentes{
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+#tabela-aprovados{
+  overflow-x: auto;
 }
 
 .admin-tabela {
@@ -214,6 +218,7 @@ body {
   min-width: 640px;
   border-collapse: collapse;
   font-size: 0.85rem;
+  overflow-x: auto;
 }
 
 .admin-tabela th {
