@@ -1781,7 +1781,7 @@ body[data-theme="light"] .social-btn {
   flex-direction: column;
   padding: 0.6rem;
   overflow-y: auto;
-  flex: 1;
+  position: relative;
 }
 .mobile-menu-link {
   display: flex;
@@ -1828,6 +1828,7 @@ body[data-theme="light"] .social-btn {
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: center;
+  margin-top: auto;
 }
 
 @media (max-width: 900px) {
