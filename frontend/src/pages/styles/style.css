@@ -1244,6 +1244,11 @@ body[data-theme="light"] .footer-desc {
   letter-spacing: 0.04em;
 }
 
+a{
+  text-decoration: none;
+  color: rgb(232, 213, 163);
+}
+
 body[data-theme="light"] .footer-col ul li a {
   color: rgba(61, 42, 30, 0.72);
 }
