@@ -218,12 +218,12 @@ body {
     font-size: 13px;
     text-align: center;
     margin-top: 10px;
-    color: #c82333;
+    color: #ffffff;
     font-weight: 500;
 }
 
 .form-msg.sucesso {
-    color: #1e7e34;
+    color: #ffffff;
 }
 
 /* Alertas de Verificação */

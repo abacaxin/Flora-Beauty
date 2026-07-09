@@ -26,6 +26,32 @@ body {
   flex-direction: column;
 }
 
+.admin-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-sidebar-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(201,168,76,0.2));
+  background: transparent;
+  color: var(--text-main, #f5f0e8);
+  cursor: pointer;
+}
+
+.admin-sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .admin-logo {
   font-family: 'Playfair Display', serif;
   font-size: 1.2rem;
@@ -172,8 +198,20 @@ body {
 }
 
 /* ── Tabelas ───────────────────────────────────────────────────────────── */
+#tabela-produtos,
+#tabela-pedidos,
+#tabela-revendedores,
+#tabela-categorias,
+#lista-paginas,
+#lista-pedidos-recentes {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .admin-tabela {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -375,24 +413,130 @@ body {
 @media (max-width: 900px) {
   .admin-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
   }
+
   .admin-sidebar {
-    flex-direction: row;
-    overflow-x: auto;
+    padding: 0.9rem 1.2rem;
     border-right: none;
     border-bottom: 1px solid var(--border, rgba(201,168,76,0.15));
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
-  .admin-nav {
-    flex-direction: row;
-    margin-top: 0;
+
+  .admin-sidebar-toggle {
+    display: flex;
   }
+
+  .admin-logo {
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  /* nav e rodapé viram um dropdown, fechado por padrão */
+  .admin-nav,
   .admin-sidebar-rodape {
     display: none;
   }
+
+  .admin-sidebar.open .admin-nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+  }
+
+  .admin-sidebar.open .admin-sidebar-rodape {
+    display: block;
+  }
+
+  .admin-nav a {
+    padding: 0.8rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
   .admin-conteudo {
     padding: 1.5rem;
   }
+
+  .admin-topo h1 {
+    font-size: 1.35rem;
+  }
+
+  .admin-metricas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .admin-card-metrica {
+    padding: 1rem;
+  }
+
+  .admin-card-metrica .valor {
+    font-size: 1.55rem;
+  }
+
   .admin-campo-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-modal {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar {
+    padding: 0.75rem 1rem;
+  }
+
+  .admin-logo {
+    font-size: 1.05rem;
+  }
+
+  .admin-conteudo {
+    padding: 1.1rem 0.9rem;
+  }
+
+  .admin-topo {
+    margin-bottom: 1.4rem;
+  }
+
+  .admin-topo h1 {
+    font-size: 1.2rem;
+  }
+
+  .admin-metricas-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-bloco {
+    padding: 1.1rem 0.9rem;
+  }
+
+  .admin-tabela {
+    font-size: 0.78rem;
+    min-width: 560px;
+  }
+
+  .admin-modal {
+    padding: 1.25rem;
+  }
+
+  .admin-modal h2 {
+    font-size: 1.1rem;
+  }
+
+  .admin-modal-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .admin-modal-acoes .admin-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .admin-acoes-linha {
+    flex-wrap: wrap;
   }
 }

@@ -1,6 +1,7 @@
 // ── Sidebar do Painel Admin ──────────────────────────────────────────────
 // Montada via JS para evitar duplicar o mesmo HTML em cada página do
-// painel. Marca o item ativo conforme a página atual.
+// painel. Marca o item ativo conforme a página atual. No mobile, vira uma
+// barra superior com um botão hambúrguer que abre a navegação em dropdown.
 
 const paginaAtual = window.location.pathname.split("/").pop().replace(".html", "") || "index";
 
@@ -17,10 +18,19 @@ function montarSidebar() {
   if (!container) return;
 
   container.innerHTML = `
-    <aside class="admin-sidebar">
-      <div class="admin-logo">
-        <a href="../index.html" class="admin_logo_nome">Flora Boutique</a>
-        <small>Painel Admin</small>
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="admin-sidebar-top">
+        <div class="admin-logo">
+          <a href="../index.html" class="admin_logo_nome">Flora Boutique</a>
+          <small>Painel Admin</small>
+        </div>
+        <button class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Abrir menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
       </div>
       <nav class="admin-nav">
         ${itensMenu.map((item) => `
@@ -35,6 +45,24 @@ function montarSidebar() {
       </div>
     </aside>
   `;
+
+  const sidebar = document.getElementById("admin-sidebar");
+  const toggle = document.getElementById("admin-sidebar-toggle");
+
+  if (sidebar && toggle) {
+    toggle.addEventListener("click", () => {
+      const aberto = sidebar.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", String(aberto));
+    });
+
+    // Fecha o menu ao navegar para outra página do painel (mobile)
+    sidebar.querySelectorAll(".admin-nav a").forEach((link) => {
+      link.addEventListener("click", () => {
+        sidebar.classList.remove("open");
+        toggle.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
 }
 
 montarSidebar();
