@@ -1,13 +1,25 @@
-import { exigirLogin, atualizarPerfil, alterarSenha, logoutUsuario, traduzErroAuth } from "../services/auth.js";
+import {
+  exigirLogin,
+  atualizarPerfil,
+  alterarSenha,
+  logoutUsuario,
+  traduzErroAuth,
+  solicitarContaRevendedor,
+  voltarParaContaCliente
+} from "../services/auth.js";
+import { formatarCNPJ, validarCNPJ, consultarCNPJ } from "../services/cnpj.js";
+import { escapeHtml } from "../services/seguranca.js";
 import { db } from "../services/firebase-config.js";
 import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 let usuarioAtual = null;
+let perfilAtual = null;
 
 // ── Elementos ───────────────────────────────────────────────────────────
 const avatarImg = document.getElementById("perfil-avatar-img");
@@ -131,9 +143,193 @@ campoCep.addEventListener("blur", async () => {
   }
 });
 
+// ── Aba Atacado/Revenda (A5) ─────────────────────────────────────────────
+const painelRevendedorStatus = document.getElementById("revendedor-status");
+const formRevendedor = document.getElementById("form-revendedor");
+const campoCnpj = document.getElementById("campo-cnpj");
+const campoRazaoSocial = document.getElementById("campo-razao-social");
+const btnSolicitarRevenda = document.getElementById("btn-solicitar-revenda");
+const msgRevendedor = document.getElementById("msg-revendedor");
+const cnpjStatusPerfil = document.getElementById("cnpj-status-perfil");
+const blocoVoltarCliente = document.getElementById("bloco-voltar-cliente");
+const btnVoltarCliente = document.getElementById("btn-voltar-cliente");
+
+let infoEmpresaConsultada = null;
+
+campoCnpj?.addEventListener("input", () => {
+  campoCnpj.value = formatarCNPJ(campoCnpj.value);
+  cnpjStatusPerfil.textContent = "";
+  infoEmpresaConsultada = null;
+});
+
+campoCnpj?.addEventListener("blur", async () => {
+  const cnpj = campoCnpj.value.trim();
+  if (!cnpj) return;
+
+  if (!validarCNPJ(cnpj)) {
+    cnpjStatusPerfil.textContent = "Verifique os números do CNPJ digitado.";
+    return;
+  }
+
+  cnpjStatusPerfil.textContent = "Consultando dados públicos do CNPJ...";
+  const resultado = await consultarCNPJ(cnpj);
+  if (!resultado) {
+    cnpjStatusPerfil.textContent = "Não foi possível verificar automaticamente — você pode continuar mesmo assim.";
+    return;
+  }
+  infoEmpresaConsultada = resultado;
+  if (resultado.razaoSocial && !campoRazaoSocial.value.trim()) {
+    campoRazaoSocial.value = resultado.razaoSocial;
+  }
+  cnpjStatusPerfil.textContent = resultado.provavelMEI
+    ? "✓ Identificado como MEI."
+    : `✓ CNPJ encontrado${resultado.porte ? ` — porte: ${resultado.porte}` : ""}.`;
+});
+
+function renderizarStatusRevendedor() {
+  if (!painelRevendedorStatus) return;
+
+  const status = perfilAtual?.statusRevendedor || "";
+  const ehRevendedor = perfilAtual?.tipoConta === "revendedor";
+  let html = "";
+
+  formRevendedor.style.display = "none";
+  blocoVoltarCliente.style.display = "none";
+
+  if (ehRevendedor && status === "aprovado") {
+    html = `
+      <div class="perfil-campo">
+        <p><strong>Conta de revendedor aprovada.</strong></p>
+        <p style="color:var(--text-muted); font-size:0.85rem;">
+          CNPJ: ${escapeHtml(perfilAtual.cnpj || "—")} · ${escapeHtml(perfilAtual.razaoSocial || "")}
+        </p>
+        <a href="atacado.html" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:0.6rem;">Ir para o atacado</a>
+      </div>
+    `;
+    blocoVoltarCliente.style.display = "block";
+  } else if (ehRevendedor && status === "pendente") {
+    html = `
+      <div class="perfil-campo">
+        <p><strong>Solicitação em análise.</strong></p>
+        <p style="color:var(--text-muted); font-size:0.85rem;">
+          Seu CNPJ ${escapeHtml(perfilAtual.cnpj || "")} está aguardando aprovação da loja. Avisaremos por e-mail.
+        </p>
+      </div>
+    `;
+    blocoVoltarCliente.style.display = "block";
+  } else if (ehRevendedor && status === "rejeitado") {
+    html = `
+      <div class="perfil-campo">
+        <p><strong>Solicitação não aprovada.</strong></p>
+        <p style="color:var(--text-muted); font-size:0.85rem;">
+          Você pode revisar os dados e enviar uma nova solicitação abaixo, ou falar com a loja pelo WhatsApp.
+        </p>
+      </div>
+    `;
+    formRevendedor.style.display = "block";
+    if (perfilAtual.cnpj) campoCnpj.value = formatarCNPJ(perfilAtual.cnpj);
+    if (perfilAtual.razaoSocial) campoRazaoSocial.value = perfilAtual.razaoSocial;
+  } else if (!ehRevendedor && status === "aprovado") {
+    // Já foi aprovado antes e voltou para cliente — reativar é imediato.
+    html = `
+      <div class="perfil-campo">
+        <p><strong>Sua aprovação de revendedor está guardada.</strong></p>
+        <p style="color:var(--text-muted); font-size:0.85rem;">Reative o modo revendedor para voltar a comprar no atacado.</p>
+        <button type="button" class="btn-primary" id="btn-reativar-revenda" style="margin-top:0.6rem;">Reativar conta de revendedor</button>
+      </div>
+    `;
+  } else {
+    formRevendedor.style.display = "block";
+  }
+
+  painelRevendedorStatus.innerHTML = html;
+
+  document.getElementById("btn-reativar-revenda")?.addEventListener("click", async () => {
+    try {
+      // Só o tipoConta muda — statusRevendedor "aprovado" fica intacto
+      // (a allowlist de atualizarPerfil não cobre tipoConta; usamos a
+      // função dedicada com os dados já existentes no perfil).
+      await solicitarContaRevendedorReativando();
+      perfilAtual.tipoConta = "revendedor";
+      renderizarStatusRevendedor();
+    } catch (erro) {
+      console.error(erro);
+      alert("Não foi possível reativar agora. Tente novamente.");
+    }
+  });
+}
+
+// Reativação: volta tipoConta para "revendedor" sem tocar no status
+// (statusRevendedor "aprovado" fica intacto — as rules permitem porque
+// o status não muda).
+async function solicitarContaRevendedorReativando() {
+  await updateDoc(doc(db, "usuarios", usuarioAtual.uid), {
+    tipoConta: "revendedor",
+    atualizadoEm: serverTimestamp()
+  });
+}
+
+formRevendedor?.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  mostrarMsg(msgRevendedor, "");
+
+  const cnpj = campoCnpj.value.trim();
+  const razaoSocial = campoRazaoSocial.value.trim();
+
+  if (!cnpj || !razaoSocial) {
+    mostrarMsg(msgRevendedor, "Informe o CNPJ e a razão social da sua loja.");
+    return;
+  }
+  if (!validarCNPJ(cnpj)) {
+    mostrarMsg(msgRevendedor, "CNPJ inválido. Verifique os números digitados.");
+    return;
+  }
+
+  btnSolicitarRevenda.disabled = true;
+  btnSolicitarRevenda.textContent = "Enviando...";
+
+  try {
+    await solicitarContaRevendedor(usuarioAtual, {
+      cnpj,
+      razaoSocial,
+      provavelMEI: infoEmpresaConsultada?.provavelMEI ?? null,
+      porteEmpresa: infoEmpresaConsultada?.porte ?? null
+    });
+    perfilAtual = { ...perfilAtual, tipoConta: "revendedor", cnpj, razaoSocial, statusRevendedor: "pendente" };
+    mostrarMsg(msgRevendedor, "Solicitação enviada! Avisaremos quando for aprovada.", "sucesso");
+    renderizarStatusRevendedor();
+  } catch (erro) {
+    console.error(erro);
+    mostrarMsg(msgRevendedor, "Não foi possível enviar agora. Tente novamente.");
+  } finally {
+    btnSolicitarRevenda.disabled = false;
+    btnSolicitarRevenda.textContent = "Solicitar conta de revendedor";
+  }
+});
+
+btnVoltarCliente?.addEventListener("click", async () => {
+  const confirmar = confirm("Usar sua conta como cliente comum? Você pode voltar ao modo revendedor quando quiser.");
+  if (!confirmar) return;
+  try {
+    await voltarParaContaCliente(usuarioAtual);
+    perfilAtual = { ...perfilAtual, tipoConta: "cliente" };
+    renderizarStatusRevendedor();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível alterar agora. Tente novamente.");
+  }
+});
+
 // ── Carregar dados do usuário ────────────────────────────────────────────
 exigirLogin(async ({ usuario, perfil }) => {
   usuarioAtual = usuario;
+  perfilAtual = perfil || {};
+  renderizarStatusRevendedor();
+
+  // Link direto para a aba de revenda (ex.: atacado.html → perfil.html#revendedor)
+  if (window.location.hash === "#revendedor") {
+    document.getElementById("tab-revendedor")?.click();
+  }
 
   const nome = perfil?.nome || usuario.displayName || "";
   const fotoURL = perfil?.fotoURL || usuario.photoURL || "";

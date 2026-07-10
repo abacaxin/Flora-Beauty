@@ -1,30 +1,19 @@
-// ── Navbar: escurece ao rolar ─────────────────────────────────────────────────
+// ── Comportamentos gerais das páginas da loja ─────────────────────────────
+// ⚠️ Este arquivo é um MÓDULO (contém export) — inclua sempre com
+// <script type="module" src="services/script.js">. Antes ele era incluído
+// como script clássico e o `export` derrubava o arquivo inteiro com
+// SyntaxError (a home só funcionava porque home-dinamica.js o importava).
+// O switch de tema agora vive em services/tema.js.
+
+// ── Navbar: escurece ao rolar ─────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-  navbar.classList.toggle('scrolled', window.scrollY > 40);
-});
-
-const themeToggles = document.querySelectorAll('.theme-toggle');
-const savedTheme = localStorage.getItem('floraTheme');
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-function applyTheme(theme) {
-  document.body.dataset.theme = theme;
-  themeToggles.forEach((btn) => btn.classList.toggle('active', theme === 'light'));
-  localStorage.setItem('floraTheme', theme);
+if (navbar) {
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  });
 }
 
-themeToggles.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const nextTheme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
-    applyTheme(nextTheme);
-  });
-});
-
-applyTheme(initialTheme);
-
-// ── Categorias dropdown ───────────────────────────────────────────────────────
+// ── Categorias dropdown ───────────────────────────────────────────────────
 const categoriasBtn = document.getElementById('categoriasBtn');
 const categoriasDropdown = document.getElementById('categoriasDropdown');
 
@@ -59,7 +48,7 @@ if (categoriasBtn && categoriasDropdown) {
   });
 }
 
-// ── Scroll reveal com IntersectionObserver ────────────────────────────────────
+// ── Scroll reveal com IntersectionObserver ────────────────────────────────
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -77,15 +66,8 @@ export function ativarReveals(container = document) {
 // ativa os elementos já existentes na página
 ativarReveals();
 
-// ── Abre WhatsApp com mensagem do produto ─────────────────────────────────────
-function openWhatsApp(product) {
-  const msg = encodeURIComponent(
-    'Olá! Tenho interesse no produto: ' + product + '. Pode me passar mais informações?'
-  );
-  window.open('https://wa.me/5598984853656?text=Boa%20noite=' + msg, '_blank');
-}
-
-// ── Newsletter: envia e-mail via WhatsApp ─────────────────────────────────────
+// ── Newsletter: envia e-mail via WhatsApp ─────────────────────────────────
+// Exposta em window porque o index.html chama via onclick="handleNewsletter()".
 function handleNewsletter() {
   const email = document.getElementById('email-input').value;
   if (!email || !email.includes('@')) {
@@ -95,10 +77,11 @@ function handleNewsletter() {
   const msg = encodeURIComponent(
     'Olá! Gostaria de receber novidades da Flora Boutique. Meu e-mail é: ' + email
   );
-  window.open('https://wa.me/5598984853656?text=Boa%20noite=' + msg, '_blank');
+  window.open('https://wa.me/5598984853656?text=' + msg, '_blank');
 }
+window.handleNewsletter = handleNewsletter;
 
-// ── Smooth scroll para âncoras internas ──────────────────────────────────────
+// ── Smooth scroll para âncoras internas ──────────────────────────────────
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', e => {
     const target = document.querySelector(anchor.getAttribute('href'));
@@ -109,8 +92,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-
-// ── Carrossel de fotos ────────────────────────────────────────────────────────
+// ── Carrossel de fotos ("Looks que inspiram") ─────────────────────────────
 const track = document.getElementById('carouselTrack');
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
@@ -165,30 +147,30 @@ if (track && btnPrev && btnNext) {
     });
   });
 
-  // ── Lightbox do carrossel ─────────────────────────────────────────────────────
-const overlay     = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightboxImg');
-const closeBtn    = document.getElementById('lightboxClose');
+  // ── Lightbox do carrossel ───────────────────────────────────────────────
+  const overlay = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const closeBtn = document.getElementById('lightboxClose');
 
-document.getElementById('carouselTrack').addEventListener('click', e => {
-  const img = e.target.closest('.carousel-card img');
-  if (!img) return;
-  lightboxImg.src = img.src;
-  lightboxImg.alt = img.alt;
-  overlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
-});
+  track.addEventListener('click', e => {
+    const img = e.target.closest('.carousel-card img');
+    if (!img) return;
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
 
-function closeLightbox() {
-  overlay.classList.remove('active');
-  document.body.style.overflow = '';
-}
+  function closeLightbox() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 
-closeBtn.addEventListener('click', closeLightbox);
-overlay.addEventListener('click', e => {
-  if (e.target === overlay) closeLightbox();
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeLightbox();
-});
+  closeBtn.addEventListener('click', closeLightbox);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeLightbox();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+  });
 }

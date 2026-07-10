@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { escapeHtml } from "../../services/seguranca.js";
 import { buscarMetricas } from "../../services/metricas.js";
 import { listarProdutos } from "../../services/produtos.js";
 import { db } from "../../services/firebase-config.js";
@@ -26,13 +27,13 @@ async function buscarTodosPedidos() {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-function renderizarBarra(rotulo, valor, total, cor = "var(--gold, #C9A84C)") {
+function renderizarBarra(rotulo, valor, total, cor = "var(--gold)") {
   const porcentagem = total > 0 ? Math.round((valor / total) * 100) : 0;
   return `
     <div style="margin-bottom: 0.8rem;">
       <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.3rem;">
-        <span>${rotulo}</span>
-        <span style="color:var(--text-muted,#999);">${valor} (${porcentagem}%)</span>
+        <span>${escapeHtml(rotulo)}</span>
+        <span style="color:var(--text-muted);">${valor} (${porcentagem}%)</span>
       </div>
       <div style="background:rgba(255,255,255,0.06); border-radius:4px; height:8px; overflow:hidden;">
         <div style="background:${cor}; height:100%; width:${porcentagem}%;"></div>
@@ -117,7 +118,7 @@ async function carregarDashboard() {
       <table class="admin-tabela">
         <thead><tr><th>Página</th><th>Visitas</th></tr></thead>
         <tbody>
-          ${paginasOrdenadas.map(([pagina, qtd]) => `<tr><td>${pagina}</td><td>${qtd}</td></tr>`).join("")}
+          ${paginasOrdenadas.map(([pagina, qtd]) => `<tr><td>${escapeHtml(pagina)}</td><td>${qtd}</td></tr>`).join("")}
         </tbody>
       </table>
     `;
@@ -132,10 +133,10 @@ async function carregarDashboard() {
         <tbody>
           ${recentes.map((p) => `
             <tr>
-              <td>${p.id.slice(0, 8)}...</td>
+              <td>${escapeHtml(p.id.slice(0, 8))}...</td>
               <td>${formatarData(p.criadoEm)}</td>
               <td>${formatarPreco(p.total)}</td>
-              <td><span class="badge badge-${p.status}">${p.status?.replace(/_/g, " ")}</span></td>
+              <td><span class="badge badge-${escapeHtml(p.status || "")}">${escapeHtml((p.status || "").replace(/_/g, " "))}</span></td>
             </tr>
           `).join("")}
         </tbody>

@@ -1,8 +1,9 @@
-import { buscarProdutoPorId, listarProdutos } from "../services/produtos.js";
+import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo } from "../services/produtos.js";
 import { listarCategorias } from "../services/categorias.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
 import { registrarVisita } from "../services/metricas.js";
+import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 
 // ⚠️ Miguel: para mudar o tempo de troca automática das imagens do
 // produto, edite só o número abaixo (em milissegundos — 1000 = 1 segundo).
@@ -13,8 +14,6 @@ const produtoId = params.get("id");
 
 const conteudo = document.getElementById("produto-conteudo");
 const trilhaNome = document.getElementById("trilha-nome");
-const buscaForm = document.getElementById("nav-busca-form");
-const buscaInput = document.getElementById("nav-busca-input");
 
 let usuarioAtual = null;
 let produtoAtual = null;
@@ -24,11 +23,7 @@ observarAuth(({ usuario }) => {
   usuarioAtual = usuario;
 });
 
-buscaForm.addEventListener("submit", (evento) => {
-  evento.preventDefault();
-  const termo = buscaInput.value.trim();
-  window.location.href = `produtos.html?busca=${encodeURIComponent(termo)}`;
-});
+// A busca da navbar/menu mobile é ligada por services/nav-busca.js.
 
 function formatarPreco(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -69,7 +64,11 @@ async function carregarProduto() {
 
   registrarVisita(`produto:${p.id}`, "produto");
 
-  const disponivel = p.estoque > 0;
+  // Estoque de varejo e atacado são independentes (A4): esta página vende
+  // no varejo; o atacado tem página e estoque próprios.
+  const estoqueVarejo = estoquePorModo(p, "varejo");
+  const disponivel = estoqueVarejo > 0;
+  const preco = infoPreco(p, "varejo");
   const todasImagens = [p.imagemURL, ...(p.imagensExtras || [])].filter(Boolean);
   if (todasImagens.length === 0) todasImagens.push("images/logo.ico");
 
@@ -80,7 +79,7 @@ async function carregarProduto() {
           <div class="produto-carrossel-trilho" id="produto-carrossel-trilho">
             ${todasImagens.map((url, i) => `
               <div class="produto-carrossel-slide">
-                <img src="${url}" alt="${p.nome} - imagem ${i + 1}" draggable="false">
+                <img src="${urlImagemSegura(url)}" alt="${escapeHtml(p.nome)} - imagem ${i + 1}" draggable="false">
               </div>
             `).join("")}
           </div>
@@ -98,26 +97,32 @@ async function carregarProduto() {
         </div>
       </div>
       <div class="produto-info">
-        <h1>${p.nome}</h1>
-        <p class="produto-sku">SKU: ${p.sku || "—"}</p>
+        <h1>${escapeHtml(p.nome)}</h1>
+        <p class="produto-sku">SKU: ${escapeHtml(p.sku || "—")}</p>
 
-        <div class="produto-preco">${formatarPreco(p.precoVarejo)}</div>
-        ${p.precoAtacado ? `
+        <div class="produto-preco">
+          ${formatarPreco(preco.precoFinal)}
+          ${preco.temDesconto ? `
+            <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
+            <span class="desconto-badge">-${preco.percentual}%</span>
+          ` : ""}
+        </div>
+        ${disponivelNoModo(p, "atacado") ? `
           <p class="produto-preco-atacado">
-            Comprando ${p.qtdMinimaAtacado || 1}+ unidades: ${formatarPreco(p.precoAtacado)}/un.
+            No atacado: ${formatarPreco(infoPreco(p, "atacado").precoFinal)}/un. para revendedores.
             <a href="atacado.html">Ver modo atacado</a>
           </p>
         ` : ""}
 
         <p class="produto-estoque ${disponivel ? "disponivel" : "indisponivel"}">
-          ${disponivel ? `Em estoque (${p.estoque} unidades)` : "Produto fora de estoque"}
+          ${disponivel ? `Em estoque (${estoqueVarejo} unidades)` : "Produto fora de estoque"}
         </p>
 
         ${disponivel ? `
           <div class="produto-qtd-wrap">
             <div class="produto-qtd-controle">
               <button type="button" id="qtd-menos">−</button>
-              <input type="number" id="qtd-input" value="1" min="1" max="${p.estoque}">
+              <input type="number" id="qtd-input" value="1" min="1" max="${estoqueVarejo}">
               <button type="button" id="qtd-mais">+</button>
             </div>
           </div>
@@ -129,13 +134,13 @@ async function carregarProduto() {
 
         <div class="produto-descricao">
           <h3>Descrição</h3>
-          <p>${p.descricao || "Sem descrição disponível."}</p>
+          <p>${escapeHtml(p.descricao || "Sem descrição disponível.")}</p>
         </div>
 
         <div class="produto-detalhes-tabela">
-          <div><span>Categoria</span><span>${categoriasCache.find((c) => c.slug === p.categoria)?.nome || p.categoria || "—"}</span></div>
+          <div><span>Categoria</span><span>${escapeHtml(categoriasCache.find((c) => c.slug === p.categoria)?.nome || p.categoria || "—")}</span></div>
           <div><span>Peso</span><span>${formatarPeso(p.peso)}</span></div>
-          <div><span>Código de barras</span><span>${p.codigoBarras || "—"}</span></div>
+          <div><span>Código de barras</span><span>${escapeHtml(p.codigoBarras || "—")}</span></div>
         </div>
       </div>
     </div>
@@ -247,7 +252,7 @@ function configurarSeletorQtd() {
     input.value = Math.max(1, Number(input.value) - 1);
   });
   document.getElementById("qtd-mais").addEventListener("click", () => {
-    input.value = Math.min(produtoAtual.estoque, Number(input.value) + 1);
+    input.value = Math.min(estoquePorModo(produtoAtual, "varejo"), Number(input.value) + 1);
   });
 }
 
@@ -271,7 +276,9 @@ function configurarBotaoCarrinho() {
         produtoId: produtoAtual.id,
         nome: produtoAtual.nome,
         imagemURL: produtoAtual.imagemURL || "",
-        precoUnitario: produtoAtual.precoVarejo,
+        // Preço de EXIBIÇÃO no carrinho (já com desconto). O valor cobrado
+        // é recalculado no servidor pela Cloud Function criarPedido.
+        precoUnitario: infoPreco(produtoAtual, "varejo").precoFinal,
         pesoUnitario: produtoAtual.peso || 0,
         quantidade,
         modo: "varejo"

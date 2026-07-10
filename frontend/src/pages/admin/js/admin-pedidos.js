@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { escapeHtml } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -71,18 +72,18 @@ function renderizarTabela() {
       <tbody>
         ${lista.map((p) => `
           <tr>
-            <td>${p.id.slice(0, 8)}...</td>
+            <td>${escapeHtml(p.id.slice(0, 8))}...</td>
             <td>${formatarData(p.criadoEm)}</td>
             <td>${(p.itens || []).length} item(ns)</td>
             <td>${p.modoEntrega === "retirada" ? "Retirada" : "Entrega"}</td>
             <td>${formatarPreco(p.total)}</td>
             <td>
-              <select class="select-status" data-id="${p.id}" style="background:transparent; border:1px solid var(--border,rgba(201,168,76,0.2)); color:inherit; border-radius:4px; padding:0.3rem;">
+              <select class="select-status" data-id="${escapeHtml(p.id)}" style="background:transparent; border:1px solid var(--border); color:inherit; border-radius:4px; padding:0.3rem;">
                 ${STATUS_OPCOES.map((s) => `<option value="${s}" ${s === p.status ? "selected" : ""}>${s.replace(/_/g, " ")}</option>`).join("")}
               </select>
             </td>
             <td>
-              <button class="admin-btn admin-btn-outline admin-btn-sm btn-ver-detalhe" data-id="${p.id}">Ver detalhes</button>
+              <button class="admin-btn admin-btn-outline admin-btn-sm btn-ver-detalhe" data-id="${escapeHtml(p.id)}">Ver detalhes</button>
             </td>
           </tr>
         `).join("")}
@@ -116,15 +117,15 @@ function abrirDetalhe(pedidoId) {
 
   const itensHtml = (p.itens || []).map((item) => `
     <tr>
-      <td>${item.nome} ${item.modo === "atacado" ? "<span class='badge badge-aprovado'>ATACADO</span>" : ""}</td>
-      <td>${item.quantidade}</td>
+      <td>${escapeHtml(item.nome)} ${item.modo === "atacado" ? "<span class='badge badge-aprovado'>ATACADO</span>" : ""}</td>
+      <td>${Number(item.quantidade) || 0}</td>
       <td>${formatarPreco(item.precoUnitario)}</td>
       <td>${formatarPreco(item.precoUnitario * item.quantidade)}</td>
     </tr>
   `).join("");
 
   modalConteudo.innerHTML = `
-    <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Pedido:</strong> ${p.id}</p>
+    <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Pedido:</strong> ${escapeHtml(p.id)}</p>
     <p style="font-size:0.85rem; margin-bottom:1rem;"><strong>Data:</strong> ${formatarData(p.criadoEm)}</p>
 
     <table class="admin-tabela" style="margin-bottom:1.2rem;">
@@ -134,12 +135,12 @@ function abrirDetalhe(pedidoId) {
 
     <p style="font-size:0.85rem;"><strong>Modo de entrega:</strong> ${p.modoEntrega === "retirada" ? "Retirada na loja" : "Entrega"}</p>
     ${p.endereco ? `
-      <p style="font-size:0.85rem;"><strong>Endereço:</strong> ${p.endereco.endereco}, ${p.endereco.bairro} — CEP ${p.endereco.cep}</p>
+      <p style="font-size:0.85rem;"><strong>Endereço:</strong> ${escapeHtml(p.endereco.endereco)}, ${escapeHtml(p.endereco.bairro)} — CEP ${escapeHtml(p.endereco.cep)}</p>
     ` : ""}
-    ${p.frete ? `<p style="font-size:0.85rem;"><strong>Frete:</strong> ${formatarPreco(p.frete.valor)} (${p.frete.zona?.nome || "zona não identificada"})</p>` : ""}
+    ${p.frete ? `<p style="font-size:0.85rem;"><strong>Frete:</strong> ${formatarPreco(p.frete.valor)} (${escapeHtml(p.frete.zona?.nome || "zona não identificada")})</p>` : ""}
 
     <p style="font-size:0.95rem; margin-top:1rem;"><strong>Subtotal:</strong> ${formatarPreco(p.subtotal)}</p>
-    <p style="font-size:1.05rem; color:var(--gold,#C9A84C);"><strong>Total:</strong> ${formatarPreco(p.total)}</p>
+    <p style="font-size:1.05rem; color:var(--gold);"><strong>Total:</strong> ${formatarPreco(p.total)}</p>
   `;
 
   modal.style.display = "flex";

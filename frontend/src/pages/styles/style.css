@@ -1,22 +1,33 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+/* ── Paleta oficial Flora Beauty (B4) ─────────────────────────────────
+   O preto/dourado foi substituído por esta paleta terrosa. As variáveis
+   antigas (--gold etc.) foram MANTIDAS com novos valores para não exigir
+   mudança em milhares de linhas — --gold agora significa "cor de acento". */
 :root {
-  --bg: #0D0B09;
-  --surface: #1A1612;
-  --surface-soft: rgba(13, 11, 9, 0.92);
-  --gold: #C9A84C;
-  --gold-light: #E8D5A3;
-  --gold-cream: #f9e3a7;
-  --gold-dark: #9A7B2E;
-  --cream: #F8F3EC;
-  --cream-dark: #EDE4D6;
-  --black: #0D0B09;
-  --charcoal: #1C1A17;
-  --rose: #E8C9BC;
-  --text-main: #F8F3EC;
-  --text-muted: rgba(248, 243, 236, 0.65);
-  --border: rgba(201, 168, 76, 0.2);
-  --bg-alt: #14100E;
+  --color-1: #9C6644;
+  --color-2: #7E553A;
+  --color-3: #B08A69;
+  --color-4: #DFB793;
+  --color-5: #EEE0D5;
+
+  /* Tema escuro (padrão): fundos em marrom profundo derivado da paleta */
+  --bg: #241812;
+  --surface: #2E2018;
+  --surface-soft: rgba(36, 24, 18, 0.92);
+  --gold: var(--color-3);
+  --gold-light: var(--color-4);
+  --gold-cream: var(--color-5);
+  --gold-dark: var(--color-2);
+  --cream: var(--color-5);
+  --cream-dark: var(--color-4);
+  --black: #241812;
+  --charcoal: #2E2018;
+  --rose: var(--color-4);
+  --text-main: var(--color-5);
+  --text-muted: rgba(238, 224, 213, 0.65);
+  --border: rgba(176, 138, 105, 0.25);
+  --bg-alt: #1C120D;
 }
 
 html { scroll-behavior: smooth; }
@@ -29,23 +40,24 @@ body {
   transition: background 0.35s ease, color 0.35s ease;
 }
 
+/* Tema claro: creme da paleta como fundo, marrons como texto/acento */
 body[data-theme="light"] {
-  --bg: #F6E7D5;
-  --surface: #F3E3D0;
-  --surface-soft: rgba(255, 255, 255, 0.92);
-  --gold: #B38B3A;
-  --gold-light: #E8D5A3;
-  --gold-cream: #F9E3A7;
-  --gold-dark: #9D7A31;
-  --cream: #3B2A1F;
-  --cream-dark: #A88A75;
-  --black: #3D2A1E;
-  --charcoal: #C4A783;
-  --rose: #E8C9BC;
-  --text-main: #3B2A1F;
-  --text-muted: rgba(91, 67, 41, 0.72);
-  --border: rgba(201, 168, 76, 0.18);
-  --bg-alt: #E7D6C7;
+  --bg: var(--color-5);
+  --surface: #F7EFE6;
+  --surface-soft: rgba(247, 239, 230, 0.92);
+  --gold: var(--color-1);
+  --gold-light: var(--color-3);
+  --gold-cream: var(--color-4);
+  --gold-dark: var(--color-2);
+  --cream: #4A3423;
+  --cream-dark: var(--color-2);
+  --black: #3A2718;
+  --charcoal: var(--color-4);
+  --rose: var(--color-4);
+  --text-main: #4A3423;
+  --text-muted: rgba(74, 52, 35, 0.7);
+  --border: rgba(156, 102, 68, 0.25);
+  --bg-alt: #E5D3C2;
 }
 
 /* ── NAV ─────────────────────────────── */
@@ -129,7 +141,7 @@ nav.scrolled {
   text-decoration: none;
   padding: 0.5rem 0.9rem;
   border-radius: 4px;
-  border: 1.4px solid #9D7A31;
+  border: 1.4px solid #7E553A;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
   white-space: nowrap;
   max-width: 160px;
@@ -142,10 +154,10 @@ nav.scrolled {
 }
 
 .nav-account-btn:hover {
-  background: rgba(201, 168, 76, 0.1);
-  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(176, 138, 105, 0.1);
+  border-color: rgba(176, 138, 105, 0.3);
   color: var(--gold);
-  border: 1.4px solid #9D7A31;
+  border: 1.4px solid #7E553A;
 }
 
 /* ── NAV CATEGORIAS DROPDOWN ─────────── */
@@ -165,8 +177,8 @@ nav.scrolled {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--gold);
-  background: rgba(201, 168, 76, 0.08);
-  border: 0.5px solid rgba(201, 168, 76, 0.3);
+  background: rgba(176, 138, 105, 0.08);
+  border: 0.5px solid rgba(176, 138, 105, 0.3);
   padding: 0.55rem 1.1rem;
   border-radius: 4px;
   cursor: pointer;
@@ -176,7 +188,7 @@ nav.scrolled {
 
 .nav-categorias-btn:hover,
 .nav-categorias-btn.active {
-  background: rgba(201, 168, 76, 0.16);
+  background: rgba(176, 138, 105, 0.16);
   border-color: var(--gold);
 }
 
@@ -199,7 +211,7 @@ nav.scrolled {
   min-width: 250px;
 
   background: var(--surface);
-  border: 1px solid rgba(201,168,76,.15);
+  border: 1px solid rgba(176, 138, 105,.15);
   border-radius: 12px;
   box-shadow: 0 12px 40px rgba(0,0,0,.35);
 
@@ -247,7 +259,7 @@ body[data-theme="light"] .nav-categorias-dropdown {
 }
 
 .dropdown-list li a:hover {
-  background: rgba(201, 168, 76, 0.08);
+  background: rgba(176, 138, 105, 0.08);
   color: var(--gold);
 }
 
@@ -373,124 +385,70 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 
-/* ── HERO ────────────────────────────── */
-.hero {
+/* ── CARROSSEL DE ANÚNCIO (B1) ─────────────────────────────────────────
+   Substitui o hero antigo (fundo monótono em tela cheia). Fotos da marca
+   passam automaticamente com transição suave; sem navegação manual. */
+.hero-carrossel {
   position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  height: min(78vh, 640px);
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.08) 0%, var(--bg) 40%, var(--bg) 100%);
+  background: var(--bg-alt);
 }
-.hero-content {
-  position: relative;
+.hero-carrossel-trilho {
+  position: absolute;
+  inset: 0;
+}
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 1.1s ease, transform 6s ease;
+}
+.hero-slide.ativa {
+  opacity: 1;
+  transform: scale(1);
+}
+.hero-slide-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(36, 24, 18, 0.72) 0%, rgba(36, 24, 18, 0.25) 45%, rgba(36, 24, 18, 0.35) 100%);
+  pointer-events: none;
+}
+.hero-slide-conteudo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(2rem, 8vh, 4.5rem);
+  text-align: center;
+  padding: 0 1.5rem;
   z-index: 2;
-  max-width: 820px;
-  padding: 2rem;
-}
-.hero-logo {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid rgba(255, 187, 0, 0.5);
-  margin: 0 auto 2rem;
-  display: block;
-  opacity: 0;
-  animation: fade-up 0.8s 0.1s forwards;
-}
-.hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--cream);
-  margin-bottom: 2rem;
-  opacity: 0;
-  animation: fade-up 0.8s 0.3s forwards;
-}
-.hero-eyebrow::before, .hero-eyebrow::after {
-  content: '';
-  display: block;
-  width: 32px;
-  height: 0.5px;
-  background: var(--gold);
-  opacity: 0.5;
 }
 .hero-title {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
   font-weight: 500;
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.02em;
-  margin-bottom: 1.5rem;
-  opacity: 0;
-  animation: fade-up 0.9s 0.5s forwards;
-
-  text-shadow:
-    3px 3px 0px #FFF4D6,
-    4px 4px 0px #F2D28A,
-    5px 5px 0px #D4AF37,
-    6px 6px 0px #A97C1F,
-    /* 7px 7px 0px rgb(66, 59, 67),
-    8px 8px 0px rgba(189, 155, 192, 0.329),
-    9px 9px 0px rgba(182, 171, 182, 0.11),
-    10px 10px 0px #291d3b; */
+  margin-bottom: 0.8rem;
+  color: #FFF9F2;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
 .hero-title em {
   font-style: italic;
-  color: #aa841b;
+  color: var(--color-4);
 }
 .hero-subtitle {
   font-size: 1rem;
   font-weight: 300;
-  color: var(--text-muted);
+  color: rgba(255, 249, 242, 0.9);
   letter-spacing: 0.06em;
   line-height: 1.3;
-  margin-bottom: 3rem;
   max-width: 520px;
-  margin-left: auto;
-  margin-right: auto;
-  opacity: 0;
-  animation: fade-up 0.9s 0.7s forwards;
-}
-.hero-actions {
-  display: flex;
-  gap: 1.25rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: fade-up 0.9s 0.9s forwards;
-  color: var(--black);
-}
-.hero-scroll {
-  position: absolute;
-  bottom: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  opacity: 0;
-  animation: fade-up 0.9s 1.2s forwards;
-}
-.hero-scroll span {
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--dark_gold);
-}
-.scroll-line {
-  width: 0.5px;
-  height: 40px;
-  background: linear-gradient(to bottom, rgba(201,168,76,0.5), transparent);
-  animation: scroll-line 1.5s ease-in-out infinite;
+  margin: 0 auto;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 
 /* ── BUTTONS ─────────────────────────── */
@@ -517,7 +475,7 @@ body[data-theme="light"] .theme-toggle:hover {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--black);
-  background: #f9e3a7;
+  background: #DFB793;
   padding: 0.9rem 2.5rem;
   cursor: pointer;
   text-decoration: none;
@@ -528,7 +486,7 @@ body[data-theme="light"] .theme-toggle:hover {
 
 /* ── MARQUEE ─────────────────────────── */
 .marquee-section {
-  background: #f6bc33;
+  background: var(--color-1);
   padding: 0.9rem 0;
   overflow: hidden;
 }
@@ -543,7 +501,7 @@ body[data-theme="light"] .theme-toggle:hover {
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--black);
+  color: var(--color-5);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -663,7 +621,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .categories-grid::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.4);
+  background: rgba(176, 138, 105, 0.4);
   border-radius: 3px;
 }
 
@@ -839,24 +797,24 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .products-grid::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.7);
+  background: rgba(176, 138, 105, 0.7);
   border-radius: 999px;
 }
 
 .products-grid::-webkit-scrollbar-thumb:hover {
-  background: #c9a84c;
+  background: #B08A69;
 }
 
 .product-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(201,168,76,0.1);
+  border: 0.5px solid rgba(176, 138, 105,0.1);
   transition: border-color 0.3s, transform 0.3s;
   cursor: pointer;
   flex: 0 0 280px;
   max-width: 1150px;
 }
 .product-card:hover {
-  border-color: rgba(201,168,76,0.4);
+  border-color: rgba(176, 138, 105,0.4);
   transform: translateY(-4px);
 }
 .product-featured {
@@ -914,7 +872,7 @@ body[data-theme="light"] .theme-toggle:hover {
 .product-add {
   width: 32px;
   height: 32px;
-  border: 0.5px solid rgba(201,168,76,0.4);
+  border: 0.5px solid rgba(176, 138, 105,0.4);
   background: transparent;
   color: var(--gold);
   font-size: 1.2rem;
@@ -954,7 +912,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 1px solid rgba(201, 168, 76, 0.3);
+  border: 1px solid rgba(176, 138, 105, 0.3);
   background: transparent;
   color: var(--cream);
   display: flex;
@@ -965,7 +923,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 
 .highlight-nav-btn:hover {
-  background: rgba(201, 168, 76, 0.1);
+  background: rgba(176, 138, 105, 0.1);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -1044,7 +1002,7 @@ body[data-theme="light"] .theme-toggle:hover {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gold);
-  border: 0.5px solid rgba(201,168,76,0.3);
+  border: 0.5px solid rgba(176, 138, 105,0.3);
   padding: 0.4rem 0.9rem;
 }
 .highlight-price {
@@ -1078,7 +1036,7 @@ body[data-theme="light"] .theme-toggle:hover {
 }
 .review-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(201,168,76,0.1);
+  border: 0.5px solid rgba(176, 138, 105,0.1);
   padding: 2rem;
   text-align: left;
 }
@@ -1106,7 +1064,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(201,168,76,0.15);
+  background: rgba(176, 138, 105,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1139,7 +1097,7 @@ body[data-theme="light"] .theme-toggle:hover {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  border: 0.5px solid rgba(201,168,76,0.08);
+  border: 0.5px solid rgba(176, 138, 105,0.08);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -1173,7 +1131,7 @@ body[data-theme="light"] .theme-toggle:hover {
   flex: 1;
   padding: 0.9rem 1.25rem;
   background: rgba(248,243,236,0.07);
-  border: 0.5px solid rgba(201,168,76,0.3);
+  border: 0.5px solid rgba(176, 138, 105,0.3);
   border-right: none;
   color: var(--cream);
   font-family: 'Jost', sans-serif;
@@ -1202,7 +1160,7 @@ body[data-theme="light"] .theme-toggle:hover {
 /* ── FOOTER ──────────────────────────── */
 footer {
   background: var(--surface);
-  border-top: 0.5px solid rgba(201,168,76,0.12);
+  border-top: 0.5px solid rgba(176, 138, 105,0.12);
   padding: 4rem 4rem 2rem;
 }
 
@@ -1216,7 +1174,7 @@ body[data-theme="light"] footer {
   gap: 3rem;
   margin-bottom: 3rem;
   padding-bottom: 3rem;
-  border-bottom: 0.5px solid rgba(201,168,76,0.08);
+  border-bottom: 0.5px solid rgba(176, 138, 105,0.08);
 }
 
 body[data-theme="light"] .footer-top {
@@ -1274,11 +1232,11 @@ body[data-theme="light"] .footer-copy {
 .social-btn {
   width: 36px;
   height: 36px;
-  border: 0.5px solid rgba(201,168,76,0.2);
+  border: 0.5px solid rgba(176, 138, 105,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(201,168,76,0.6);
+  color: rgba(176, 138, 105,0.6);
   font-size: 0.85rem;
   text-decoration: none;
   transition: border-color 0.2s, color 0.2s;
@@ -1460,7 +1418,7 @@ body[data-theme="light"] .social-btn {
   }
 
   .newsletter-input {
-    border-right: 0.5px solid rgba(201,168,76,0.3);
+    border-right: 0.5px solid rgba(176, 138, 105,0.3);
   }
 
   .footer-top {
@@ -1562,14 +1520,14 @@ body[data-theme="light"] .social-btn {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 0.5px solid rgba(201,168,76,0.15);
+  border: 0.5px solid rgba(176, 138, 105,0.15);
   box-shadow: 0 4px 18px rgba(0,0,0,0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
 }
 .carousel-card:hover {
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  border-color: rgba(201,168,76,0.5);
+  border-color: rgba(176, 138, 105,0.5);
 }
 .carousel-card img {
   width: 100%;
@@ -1604,10 +1562,10 @@ body[data-theme="light"] .social-btn {
 .carousel-btn--prev {
   background: transparent;
   color: var(--gold);
-  border: 0.5px solid rgba(201,168,76,0.4);
+  border: 0.5px solid rgba(176, 138, 105,0.4);
 }
 .carousel-btn--prev:hover {
-  background: rgba(201,168,76,0.08);
+  background: rgba(176, 138, 105,0.08);
   border-color: var(--gold);
   transform: translateX(-3px);
 }
@@ -1805,7 +1763,7 @@ body[data-theme="light"] .social-btn {
   border-radius: 6px;
 }
 .mobile-menu-link:hover {
-  background: rgba(201, 168, 76, 0.08);
+  background: rgba(176, 138, 105, 0.08);
 }
 .mobile-menu-link svg {
   width: 18px;
@@ -1856,4 +1814,186 @@ body[data-theme="light"] .social-btn {
     transform: translate(-50%, -50%);
     margin: 0;
   }
+}
+/* ══════════════════════════════════════════════════════════════════════
+   NOVOS COMPONENTES (revisão 2026-07)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Vitrine de produtos na home (B2) ─────────────────────────────────
+   Grid 2×n no mobile; compacta, com botão "Ver mais" para o catálogo. */
+.vitrine-produtos {
+  padding: 4.5rem 4rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.vitrine-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+.vitrine-vermais {
+  text-align: center;
+  margin-top: 2.2rem;
+}
+@media (max-width: 900px) {
+  .vitrine-produtos { padding: 3.5rem 1.5rem; }
+  .vitrine-grid { grid-template-columns: repeat(2, 1fr); gap: 0.9rem; }
+}
+
+/* ── Preço com desconto (A2) — R$ 180 (2̶0̶0̶) ─────────────────────────── */
+.preco-antigo {
+  font-size: 0.78em;
+  color: var(--text-muted);
+  text-decoration: line-through;
+  margin-left: 0.45em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.desconto-badge {
+  display: inline-block;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--color-1);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  margin-left: 0.5em;
+  vertical-align: middle;
+}
+.desconto-selo {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 2;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-1);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.catalogo-card-img,
+.product-featured {
+  position: relative;
+}
+
+/* ── Busca no menu mobile (A1) ────────────────────────────────────────── */
+.mobile-menu-busca {
+  display: flex;
+  align-items: center;
+  margin: 0.9rem 1rem 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.45rem 0.9rem;
+  background: var(--bg);
+}
+.mobile-menu-busca input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  min-width: 0;
+}
+.mobile-menu-busca button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Aviso de status na página de atacado (A5) ────────────────────────── */
+.atacado-aviso {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1.3rem 1.5rem;
+  margin-bottom: 2rem;
+}
+.atacado-aviso h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+.atacado-aviso p {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.atacado-aviso-acoes {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.atacado-nota {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Bloco de pagamento provisório (A7) ───────────────────────────────── */
+.pagamento-bloco {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1.4rem 1.5rem;
+  text-align: left;
+  font-family: 'Jost', sans-serif;
+}
+.pagamento-bloco h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: var(--text-main);
+}
+.pagamento-linha {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+.pagamento-linha code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  color: var(--gold);
+  font-size: 0.85em;
+  word-break: break-all;
+}
+.btn-copiar-pix {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.6rem;
+  margin-left: 0.4rem;
+  cursor: pointer;
+}
+
+/* ── Etiqueta ATACADO nos itens do carrinho ───────────────────────────── */
+.tag-atacado {
+  font-size: 0.65rem;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+/* ── Sentinela do scroll infinito (B3) ────────────────────────────────── */
+#catalogo-sentinela {
+  height: 1px;
 }

@@ -8,11 +8,15 @@ import {
   obterCarrinho,
   atualizarQuantidade,
   removerDoCarrinho,
-  esvaziarCarrinho,
   calcularTotal
 } from "../services/carrinho.js";
 import { calcularFrete, TAXA_RETIRADA_LOJA } from "../services/frete.js";
-import { criarPedido } from "../services/pedidos.js";
+import { criarPedido, traduzErroPedido } from "../services/pedidos.js";
+import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
+import {
+  obterMinimoAtacadoCarrinho,
+  contarUnidadesAtacado
+} from "../services/atacado-config.js";
 
 const conteudo = document.getElementById("carrinho-conteudo");
 
@@ -20,6 +24,7 @@ let usuarioAtual = null;
 let itensAtuais = [];
 let modoEntrega = "entrega"; // "entrega" | "retirada"
 let freteAtual = { valor: 0, zona: null, encontrado: true };
+let minimoAtacado = null; // carregado de configuracoes/atacado
 
 function formatarPreco(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -74,6 +79,11 @@ function renderizarCarrinho() {
           <span>Total</span>
           <span id="valor-total">${formatarPreco(subtotal)}</span>
         </div>
+        <p class="frete-zona-info" style="margin-top:0.6rem;">
+          Os valores acima são uma estimativa — o total oficial é conferido
+          e recalculado com os preços atuais ao finalizar a compra.
+        </p>
+        <p class="checkout-msg" id="aviso-atacado" style="display:none;"></p>
 
         <button class="btn-finalizar" id="btn-finalizar">Finalizar compra</button>
         <p class="checkout-msg" id="checkout-msg" style="display:none;"></p>
@@ -84,6 +94,7 @@ function renderizarCarrinho() {
   renderizarItens();
   renderizarCamposEntrega();
   configurarBotaoFinalizar();
+  atualizarAvisoAtacado();
 
   document.querySelectorAll(".modo-entrega-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -96,19 +107,47 @@ function renderizarCarrinho() {
   });
 }
 
+// Mínimo de atacado por CARRINHO (A3): a soma das unidades em modo
+// atacado precisa atingir o mínimo configurado — aviso na interface;
+// a validação que vale é a do servidor.
+async function atualizarAvisoAtacado() {
+  const aviso = document.getElementById("aviso-atacado");
+  if (!aviso) return;
+
+  const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
+  if (unidadesAtacado === 0) {
+    aviso.style.display = "none";
+    return;
+  }
+
+  if (minimoAtacado === null) {
+    minimoAtacado = await obterMinimoAtacadoCarrinho();
+  }
+
+  if (unidadesAtacado < minimoAtacado) {
+    aviso.textContent = `Atacado: seu carrinho tem ${unidadesAtacado} unidade(s) em modo atacado — o mínimo para fechar o pedido é ${minimoAtacado} unidades (somando todos os produtos).`;
+    aviso.classList.remove("sucesso");
+    aviso.style.display = "block";
+  } else {
+    aviso.textContent = `Atacado liberado: ${unidadesAtacado} unidades no carrinho (mínimo: ${minimoAtacado}).`;
+    aviso.classList.add("sucesso");
+    aviso.style.display = "block";
+  }
+}
+
 function renderizarItens() {
   const lista = document.getElementById("lista-itens");
   lista.innerHTML = itensAtuais.map((item) => `
-    <div class="carrinho-item" data-produto-id="${item.produtoId}" data-modo="${item.modo}">
+    <div class="carrinho-item" data-produto-id="${escapeHtml(item.produtoId)}" data-modo="${escapeHtml(item.modo)}">
       <div class="carrinho-item-img">
-        <img src="${item.imagemURL || 'images/logo.ico'}" alt="${item.nome}">
+        <img src="${urlImagemSegura(item.imagemURL)}" alt="${escapeHtml(item.nome)}">
       </div>
       <div class="carrinho-item-info">
-        <h3>${item.nome} ${item.modo === "atacado" ? '<span style="font-size:0.65rem; color:var(--gold); border:1px solid var(--gold); padding:0.1rem 0.4rem; border-radius:3px; margin-left:0.4rem;">ATACADO</span>' : ""}</h3>
+        <h3>${escapeHtml(item.nome)} ${item.modo === "atacado" ? '<span class="tag-atacado">ATACADO</span>' : ""}</h3>
         <span class="preco-unit">${formatarPreco(item.precoUnitario)} / un.</span>
         <div class="carrinho-item-qtd">
           <button type="button" class="btn-qtd-menos">−</button>
-          <span class="qtd-valor">${item.quantidade}</span>
+          <span class="qtd-valor">${Number(item.quantidade) || 0}</span>
           <button type="button" class="btn-qtd-mais">+</button>
         </div>
       </div>
@@ -270,6 +309,8 @@ function atualizarResumoFrete() {
 }
 
 // ── Finalizar compra ────────────────────────────────────────────────────
+// O pedido é criado pela Cloud Function: enviamos só os identificadores e
+// quantidades, e o servidor recalcula preço, estoque, frete e total.
 function configurarBotaoFinalizar() {
   const btn = document.getElementById("btn-finalizar");
   const msg = document.getElementById("checkout-msg");
@@ -293,37 +334,39 @@ function configurarBotaoFinalizar() {
       atualizarResumoFrete();
     }
 
-    const subtotal = calcularTotal(itensAtuais);
-    const totalFinal = subtotal + (modoEntrega === "retirada" ? 0 : freteAtual.valor);
+    // Aviso antecipado do mínimo de atacado (o servidor valida de novo)
+    const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
+    if (unidadesAtacado > 0) {
+      if (minimoAtacado === null) minimoAtacado = await obterMinimoAtacadoCarrinho();
+      if (unidadesAtacado < minimoAtacado) {
+        msg.textContent = `O pedido de atacado exige no mínimo ${minimoAtacado} unidades no carrinho (você tem ${unidadesAtacado}). Adicione mais itens ou mude-os para o varejo.`;
+        msg.classList.remove("sucesso");
+        msg.style.display = "block";
+        return;
+      }
+    }
 
     btn.disabled = true;
     btn.textContent = "Criando pedido...";
 
     try {
-      const pedidoRef = await criarPedido({
-        uidComprador: usuarioAtual.uid,
+      const resultado = await criarPedido({
         itens: itensAtuais,
         modoEntrega,
-        endereco,
-        frete: modoEntrega === "retirada" ? null : freteAtual,
-        subtotal,
-        total: totalFinal
+        endereco
       });
 
-      await esvaziarCarrinho(usuarioAtual.uid);
-
-      msg.textContent = "Pedido criado com sucesso! Redirecionando para o pagamento...";
+      // O servidor já esvaziou o carrinho.
+      msg.textContent = `Pedido criado! Total confirmado: ${formatarPreco(resultado.total)}. Redirecionando...`;
       msg.classList.add("sucesso");
       msg.style.display = "block";
 
-      // O pagamento via Mercado Pago será conectado na próxima etapa.
-      // Por ora, redireciona para uma página de confirmação simples.
       setTimeout(() => {
-        window.location.href = `pedido-confirmado.html?id=${pedidoRef.id}`;
+        window.location.href = `pedido-confirmado.html?id=${encodeURIComponent(resultado.pedidoId)}`;
       }, 1200);
     } catch (erro) {
       console.error(erro);
-      msg.textContent = "Não foi possível finalizar o pedido agora. Tente novamente.";
+      msg.textContent = traduzErroPedido(erro);
       msg.classList.remove("sucesso");
       msg.style.display = "block";
       btn.disabled = false;

@@ -1,4 +1,5 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
+import { escapeHtml } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -32,25 +33,29 @@ function linhaRevendedor(r, comAcoes) {
   const badgeTipo = r.provavelMEI
     ? `<span class="badge badge-aprovado" title="Identificado via consulta pública à BrasilAPI">MEI</span>`
     : r.porteEmpresa
-      ? `<span class="badge badge-pendente">${r.porteEmpresa}</span>`
-      : `<span style="color:var(--text-muted,#999); font-size:0.75rem;">não verificado</span>`;
+      ? `<span class="badge badge-pendente">${escapeHtml(r.porteEmpresa)}</span>`
+      : `<span style="color:var(--text-muted); font-size:0.75rem;">não verificado</span>`;
+
+  const statusSeguro = ["pendente", "aprovado", "rejeitado"].includes(r.statusRevendedor)
+    ? r.statusRevendedor
+    : "pendente";
 
   return `
     <tr>
-      <td>${r.nome || "—"}</td>
-      <td>${r.email || "—"}</td>
-      <td>${r.cnpj || "—"}</td>
-      <td>${r.razaoSocial || "—"}</td>
+      <td>${escapeHtml(r.nome || "—")}</td>
+      <td>${escapeHtml(r.email || "—")}</td>
+      <td>${escapeHtml(r.cnpj || "—")}</td>
+      <td>${escapeHtml(r.razaoSocial || "—")}</td>
       <td>${badgeTipo}</td>
       <td>${formatarData(r.criadoEm)}</td>
       ${comAcoes ? `
         <td>
           <div class="admin-acoes-linha">
-            <button class="admin-btn admin-btn-primary admin-btn-sm btn-aprovar" data-id="${r.id}">Aprovar</button>
-            <button class="admin-btn admin-btn-danger admin-btn-sm btn-rejeitar" data-id="${r.id}">Rejeitar</button>
+            <button class="admin-btn admin-btn-primary admin-btn-sm btn-aprovar" data-id="${escapeHtml(r.id)}">Aprovar</button>
+            <button class="admin-btn admin-btn-danger admin-btn-sm btn-rejeitar" data-id="${escapeHtml(r.id)}">Rejeitar</button>
           </div>
         </td>
-      ` : `<td><span class="badge badge-${r.statusRevendedor}">${r.statusRevendedor}</span></td>`}
+      ` : `<td><span class="badge badge-${statusSeguro}">${statusSeguro}</span></td>`}
     </tr>
   `;
 }

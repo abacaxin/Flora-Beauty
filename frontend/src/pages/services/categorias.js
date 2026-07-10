@@ -64,7 +64,6 @@ export async function criarCategoria({ nome, imagemURL = "" }) {
   return addDoc(colecaoRef, {
     nome,
     slug,
-    icone,
     imagemURL,
     criadoEm: serverTimestamp()
   });

@@ -24,6 +24,13 @@ function mostrarMensagem(texto, tipo = "erro") {
   msg.classList.toggle("sucesso", tipo === "sucesso");
 }
 
+// Formato básico de e-mail. A prova real de que o e-mail EXISTE é o link
+// de verificação: a conta só é ativada depois que a pessoa clica nele —
+// um e-mail inventado nunca recebe o link e a conta nunca entra no banco.
+function emailTemFormatoValido(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
 // ── Toggle cliente / revendedor ──────────────────────────────────────────
 botoesTipoConta.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -105,6 +112,11 @@ form.addEventListener("submit", async (evento) => {
     return;
   }
 
+  if (!emailTemFormatoValido(email)) {
+    mostrarMensagem("Informe um e-mail válido e existente — enviaremos um link de confirmação para ele.");
+    return;
+  }
+
   if (senha.length < 6) {
     mostrarMensagem("A senha precisa ter pelo menos 6 caracteres.");
     return;
@@ -150,7 +162,8 @@ form.addEventListener("submit", async (evento) => {
     await logoutUsuario();
 
     mostrarMensagem(
-      "Conta criada! Enviamos um link de confirmação para o seu e-mail — confirme antes de fazer login.",
+      "Conta criada! Enviamos um link de confirmação para o seu e-mail — confirme antes de fazer login. " +
+      "Se o link não chegar (confira o spam), o e-mail informado pode não existir: nesse caso, refaça o cadastro com um e-mail válido.",
       "sucesso"
     );
 
@@ -188,16 +201,13 @@ btnGoogle.addEventListener("click", async () => {
 const toggleSenha = document.getElementById("toggle-senha");
 
 toggleSenha.addEventListener("click", () => {
-  console.log("Toggle senha clicado");
-    if (inputSenha.type === "password") {
-        inputSenha.type = "text";
-        // Muda para o ícone de olho aberto (Solid)
-        toggleSenha.classList.remove("bx-lock");
-        toggleSenha.classList.add("bxs-lock-open-alt");
-    } else {
-        inputSenha.type = "password";
-        // Muda de volta para o olho cortado/fechado (Solid)
-        toggleSenha.classList.remove("bxs-lock-open-alt");
-        toggleSenha.classList.add("bx-lock");
-    }
+  if (inputSenha.type === "password") {
+    inputSenha.type = "text";
+    toggleSenha.classList.remove("bx-lock");
+    toggleSenha.classList.add("bxs-lock-open-alt");
+  } else {
+    inputSenha.type = "password";
+    toggleSenha.classList.remove("bxs-lock-open-alt");
+    toggleSenha.classList.add("bx-lock");
+  }
 });

@@ -174,7 +174,7 @@
 
 .catalogo-card {
   background: var(--charcoal);
-  border: 0.5px solid rgba(201, 168, 76, 0.1);
+  border: 0.5px solid rgba(176, 138, 105, 0.1);
   border-radius: 4px;
   transition: border-color 0.3s, transform 0.3s;
   cursor: pointer;
@@ -184,7 +184,7 @@
 }
 
 .catalogo-card:hover {
-  border-color: rgba(201, 168, 76, 0.4);
+  border-color: rgba(176, 138, 105, 0.4);
   transform: translateY(-4px);
 }
 
@@ -571,5 +571,44 @@
 @media (max-width: 800px) {
   .produto-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Busca do catálogo no mobile (A1) ─────────────────────────────────
+   A busca da navbar some em telas <=900px; esta aparece no topo da
+   página de produtos para o celular. */
+.catalogo-busca-mobile {
+  display: none;
+  align-items: center;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.55rem 1rem;
+  background: var(--surface);
+}
+.catalogo-busca-mobile:focus-within {
+  border-color: var(--gold);
+}
+.catalogo-busca-mobile input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  min-width: 0;
+}
+.catalogo-busca-mobile button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .catalogo-busca-mobile {
+    display: flex;
   }
 }
