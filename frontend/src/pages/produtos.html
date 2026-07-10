@@ -132,6 +132,17 @@
 
   <!-- ── CATÁLOGO ─────────────────────────────────────────── -->
   <main class="catalogo-main">
+    <!-- Busca visível no mobile (A1): a busca da navbar some em telas
+         pequenas, então o catálogo tem a sua própria no topo. -->
+    <form class="catalogo-busca-mobile" id="catalogo-busca-form" role="search">
+      <input type="text" id="catalogo-busca-input" placeholder="Buscar produtos..." autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </form>
     <div class="catalogo-topo">
       <div class="catalogo-titulo">
         <h1 id="catalogo-titulo-texto">Todos os produtos</h1>
@@ -171,9 +182,13 @@
         <p class="catalogo-loading">Carregando produtos...</p>
       </section>
     </div>
+    <!-- Sentinela do scroll infinito (B3): quando aparece na tela, o
+         catálogo busca o próximo bloco de produtos. -->
+    <div id="catalogo-sentinela" aria-hidden="true"></div>
   </main>
 
-  <script src="services/script.js"></script>
+  <script type="module" src="services/script.js"></script>
+  <script src="services/tema.js"></script>
   <script type="module" src="services/nav-conta.js"></script>
   <script type="module" src="services/nav-carrinho.js"></script>
   <script type="module" src="services/nav-atacado-visibilidade.js"></script>

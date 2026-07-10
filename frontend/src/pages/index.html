@@ -13,7 +13,7 @@
 </head>
 <body>
 
-  <!-- ── NAV ──────────────────────────────────────────────── --> 
+  <!-- ── NAV ──────────────────────────────────────────────── -->
   <nav id="navbar">
     <div class="nav-logo">
       <a href="#" id="logo-button">
@@ -84,6 +84,15 @@
         </svg>
       </button>
     </div>
+    <form class="mobile-menu-busca" id="mobile-busca-form" role="search">
+      <input type="text" id="mobile-busca-input" placeholder="Buscar produtos..." autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </form>
     <nav class="mobile-menu-links">
       <a href="login.html" class="mobile-menu-link" id="mobile-nav-perfil">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -126,18 +135,15 @@
       </button>
     </div>
   </aside>
-  
-  <!-- ── HERO ─────────────────────────────────────────────── -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1 class="hero-title">
-        Sua <em>essência</em>,<br>nossa paixão
-      </h1>
-      <p class="hero-subtitle">
-        Perfumes exclusivos, maquiagem premium e acessórios que contam a sua história.
-        Desperte o melhor de você com a Flora Boutique.
-      </p>
-     
+
+  <!-- ── CARROSSEL DE ANÚNCIO (B1) ─────────────────────────── -->
+  <!-- Fotos da marca passando automaticamente. As imagens são
+       configuráveis no Firestore (configuracoes/homeCarrossel). -->
+  <section class="hero-carrossel">
+    <div id="hero-carrossel" class="hero-carrossel-trilho">
+      <div class="hero-slide-conteudo">
+        <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
+      </div>
     </div>
   </section>
 
@@ -148,16 +154,40 @@
       <span class="marquee-item">Maquiagem Premium</span>
       <span class="marquee-item">Acessórios Exclusivos</span>
       <span class="marquee-item">Atacado e Varejo</span>
-      <span class="marquee-item">Frete para toda São luís</span>
+      <span class="marquee-item">Frete para toda São Luís</span>
       <span class="marquee-item">Produtos Originais</span>
       <span class="marquee-item">Perfumes Importados</span>
       <span class="marquee-item">Maquiagem Premium</span>
       <span class="marquee-item">Acessórios Exclusivos</span>
       <span class="marquee-item">Atacado e Varejo</span>
-      <span class="marquee-item">Frete para Toda são luís</span>
+      <span class="marquee-item">Frete para toda São Luís</span>
       <span class="marquee-item">Produtos Originais</span>
     </div>
   </div>
+
+  <!-- ── DESTAQUES (subiram para logo após o carrossel — B1) ── -->
+  <section class="featured" id="destaques">
+    <div class="section-header-feat">
+      <h1 class="section-eyebrow1">Os mais amados</h1>
+      <h2 class="section-title2">Destaques da semana</h2>
+    </div>
+    <div class="products-grid" id="grid-destaques">
+      <p class="catalogo-loading" style="padding: 2rem;">Carregando destaques...</p>
+    </div>
+  </section>
+
+  <!-- ── VITRINE DE PRODUTOS (B2) ─────────────────────────── -->
+  <section class="vitrine-produtos" id="produtos">
+    <div class="section-header reveal">
+      <h2 class="section-title">Nossos <em>produtos</em></h2>
+    </div>
+    <div class="vitrine-grid" id="grid-produtos-home">
+      <p class="catalogo-loading" style="padding: 2rem;">Carregando produtos...</p>
+    </div>
+    <div class="vitrine-vermais">
+      <a href="produtos.html" class="btn-primary" style="text-decoration:none;">Ver mais produtos</a>
+    </div>
+  </section>
 
   <!-- ── CATEGORIES ───────────────────────────────────────── -->
   <section class="categories" id="categorias">
@@ -166,17 +196,6 @@
     </div>
     <div class="categories-grid" id="grid-categorias-home">
       <p class="catalogo-loading">Carregando categorias...</p>
-    </div>
-  </section>
-
-  <!-- ── FEATURED PRODUCTS ────────────────────────────────── -->
-  <section class="featured" id="destaques">
-    <div class="section-header-feat">
-      <h1 class="section-eyebrow1">Os mais amados</h1>
-      <h2 class="section-title2">Destaques da semana</h2>
-    </div>
-    <div class="products-grid" id="grid-destaques">
-      <p class="catalogo-loading" style="padding: 2rem;">Carregando destaques...</p>
     </div>
   </section>
 
@@ -307,7 +326,8 @@
     <img class="lightbox-img" id="lightboxImg" src="" alt="" />
   </div>
 
-  <script src="./services/script.js"></script>
+  <script type="module" src="./services/script.js"></script>
+  <script src="./services/tema.js"></script>
   <script type="module" src="./services/nav-conta.js"></script>
   <script type="module" src="./services/nav-carrinho.js"></script>
   <script type="module" src="./services/nav-atacado-visibilidade.js"></script>

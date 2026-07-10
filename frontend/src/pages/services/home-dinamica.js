@@ -1,8 +1,17 @@
-import { listarDestaques, listarBannerHero } from "./produtos.js";
+// ── Home dinâmica — Flora Beauty ───────────────────────────────────────────
+// Seções da home carregadas do Firestore: carrossel de anúncio (B1),
+// destaques, seção de produtos (B2), categorias e banner "Produto da
+// Estação". Todo texto dinâmico passa por escapeHtml e toda imagem por
+// urlImagemSegura (C4).
+
+import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco } from "./produtos.js";
 import { listarCategorias } from "./categorias.js";
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
 import { ativarReveals } from "./script.js";
+import { escapeHtml, urlImagemSegura } from "./seguranca.js";
+import { db } from "./firebase-config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 let usuarioLogado = null;
 observarAuth(({ usuario }) => {
@@ -13,7 +22,76 @@ function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// ── "Nossas categorias" (cards com link real para o catálogo filtrado) ───
+function precoHtml(p) {
+  const preco = infoPreco(p, "varejo");
+  if (!preco.temDesconto) {
+    return `<span class="product-price">${formatarPreco(preco.precoFinal)}</span>`;
+  }
+  return `
+    <span class="product-price">${formatarPreco(preco.precoFinal)}</span>
+    <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
+  `;
+}
+
+// ── Carrossel de anúncio (B1) ─────────────────────────────────────────────
+// Fotos da marca passando automaticamente, sem navegação manual (é
+// divulgação da loja, não de um produto). As imagens podem ser trocadas
+// sem código no documento configuracoes/homeCarrossel:
+//   { imagens: ["https://...", ...], intervaloMs: 4500 }
+// Sem esse documento, usa as fotos locais da pasta images/.
+const IMAGENS_CARROSSEL_PADRAO = [
+  "images/look_rosa.jpeg",
+  "images/look_amarelo.jpeg",
+  "images/look_vinho.jpeg",
+  "images/look_branco.jpeg"
+];
+const INTERVALO_CARROSSEL_PADRAO_MS = 4500;
+
+async function iniciarCarrosselAnuncio() {
+  const container = document.getElementById("hero-carrossel");
+  if (!container) return;
+
+  let imagens = IMAGENS_CARROSSEL_PADRAO;
+  let intervalo = INTERVALO_CARROSSEL_PADRAO_MS;
+
+  try {
+    const snap = await getDoc(doc(db, "configuracoes", "homeCarrossel"));
+    if (snap.exists()) {
+      const dados = snap.data();
+      if (Array.isArray(dados.imagens) && dados.imagens.length > 0) {
+        imagens = dados.imagens;
+      }
+      if (Number(dados.intervaloMs) >= 1500) {
+        intervalo = Number(dados.intervaloMs);
+      }
+    }
+  } catch (erro) {
+    console.error("Carrossel: usando imagens padrão (config indisponível):", erro);
+  }
+
+  container.innerHTML = `
+    ${imagens.map((url, i) => `
+      <div class="hero-slide ${i === 0 ? "ativa" : ""}" style="background-image:url('${urlImagemSegura(url)}')"></div>
+    `).join("")}
+    <div class="hero-slide-overlay"></div>
+    <div class="hero-slide-conteudo">
+      <h1 class="hero-title">Sua <em>essência</em>,<br>nossa paixão</h1>
+      <p class="hero-subtitle">Perfumes, maquiagem e acessórios que contam a sua história.</p>
+    </div>
+  `;
+
+  if (imagens.length <= 1) return;
+
+  const slides = container.querySelectorAll(".hero-slide");
+  let indice = 0;
+  setInterval(() => {
+    slides[indice].classList.remove("ativa");
+    indice = (indice + 1) % slides.length;
+    slides[indice].classList.add("ativa");
+  }, intervalo);
+}
+
+// ── "Nossas categorias" ───────────────────────────────────────────────────
 async function carregarCategoriasVisuais() {
   const grid = document.getElementById("grid-categorias-home");
   if (!grid) return;
@@ -27,13 +105,13 @@ async function carregarCategoriasVisuais() {
     }
 
     grid.innerHTML = categorias.map((c) => `
-      <a class="cat-card reveal" href="produtos.html?categoria=${c.slug}" style="text-decoration:none; display:block;">
+      <a class="cat-card reveal" href="produtos.html?categoria=${encodeURIComponent(c.slug)}" style="text-decoration:none; display:block;">
         <div class="cat-imagem-generica">
-          <img src="${c.imagemURL || 'images/logo.ico'}" alt="${c.nome}">
+          <img src="${urlImagemSegura(c.imagemURL)}" alt="${escapeHtml(c.nome)}">
         </div>
         <div class="cat-overlay"></div>
         <div class="cat-label">
-          <span class="cat-name">${c.nome}</span>
+          <span class="cat-name">${escapeHtml(c.nome)}</span>
         </div>
         <div class="cat-arrow">→</div>
       </a>
@@ -62,26 +140,27 @@ async function carregarDestaques() {
 
     grid.innerHTML = produtos.map((p) => `
       <div class="product-card reveal">
-        <a href="produto.html?id=${p.id}" style="text-decoration:none; color:inherit; display:block;">
+        <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; color:inherit; display:block;">
           <div class="product-featured">
-            <img src="${p.imagemURL || 'images/logo.ico'}" alt="${p.nome}">
+            <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}">
+            ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
           </div>
           <div class="product-info">
-            <div class="product-name">${p.nome}</div>
-            <div class="product-brand">${p.categoria || ""}</div>
+            <div class="product-name">${escapeHtml(p.nome)}</div>
+            <div class="product-brand">${escapeHtml(p.categoria || "")}</div>
             <div class="product-footer">
-              <span class="product-price">${formatarPreco(p.precoVarejo)}</span>
+              ${precoHtml(p)}
             </div>
           </div>
         </a>
-        <button class="product-add" data-id="${p.id}" title="Adicionar ao carrinho">+</button>
+        <button class="product-add" data-id="${escapeHtml(p.id)}" title="Adicionar ao carrinho">+</button>
       </div>
     `).join("");
 
     ativarReveals(grid);
 
     grid.querySelectorAll(".product-add").forEach((btn) => {
-      btn.addEventListener("click", () => adicionarDestaqueAoCarrinho(btn, produtos));
+      btn.addEventListener("click", () => adicionarProdutoAoCarrinho(btn, produtos));
     });
   } catch (erro) {
     console.error("Erro ao carregar destaques:", erro);
@@ -89,7 +168,43 @@ async function carregarDestaques() {
   }
 }
 
-async function adicionarDestaqueAoCarrinho(btn, produtos) {
+// ── Seção de produtos (B2): recentes + botão "Ver mais" ──────────────────
+async function carregarProdutosHome() {
+  const grid = document.getElementById("grid-produtos-home");
+  if (!grid) return;
+
+  try {
+    const produtos = await listarProdutosRecentes(8);
+
+    if (produtos.length === 0) {
+      grid.innerHTML = `<p class="catalogo-vazio" style="padding:2rem;">Os produtos aparecerão aqui em breve.</p>`;
+      return;
+    }
+
+    grid.innerHTML = produtos.map((p) => `
+      <a class="catalogo-card reveal" href="produto.html?id=${encodeURIComponent(p.id)}">
+        <div class="catalogo-card-img">
+          <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
+          ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
+        </div>
+        <div class="catalogo-card-info">
+          <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
+          <span class="catalogo-card-preco">
+            ${formatarPreco(infoPreco(p).precoFinal)}
+            ${infoPreco(p).temDesconto ? `<span class="preco-antigo">${formatarPreco(infoPreco(p).precoOriginal)}</span>` : ""}
+          </span>
+        </div>
+      </a>
+    `).join("");
+
+    ativarReveals(grid);
+  } catch (erro) {
+    console.error("Erro ao carregar a vitrine de produtos:", erro);
+    grid.innerHTML = `<p class="catalogo-vazio" style="padding:2rem;">Não foi possível carregar os produtos agora.</p>`;
+  }
+}
+
+async function adicionarProdutoAoCarrinho(btn, produtos) {
   if (!usuarioLogado) {
     window.location.href = "login.html";
     return;
@@ -107,7 +222,7 @@ async function adicionarDestaqueAoCarrinho(btn, produtos) {
       produtoId: produto.id,
       nome: produto.nome,
       imagemURL: produto.imagemURL || "",
-      precoUnitario: produto.precoVarejo,
+      precoUnitario: infoPreco(produto, "varejo").precoFinal,
       pesoUnitario: produto.peso || 0,
       quantidade: 1,
       modo: "varejo"
@@ -143,28 +258,30 @@ function renderizarBanner() {
   }
 
   const p = produtosBanner[indiceBanner];
+  const preco = infoPreco(p, "varejo");
 
   container.innerHTML = `
     <div class="highlight-visual reveal">
       <div class="highlight-circle">
-        <img src="${p.bannerImagemURL || p.imagemURL || 'images/logo.ico'}" alt="${p.nome}">
+        <img src="${urlImagemSegura(p.bannerImagemURL || p.imagemURL)}" alt="${escapeHtml(p.nome)}">
       </div>
-      ${p.bannerEtiqueta ? `<div class="highlight-tag">${p.bannerEtiqueta}</div>` : ""}
+      ${p.bannerEtiqueta ? `<div class="highlight-tag">${escapeHtml(p.bannerEtiqueta)}</div>` : ""}
     </div>
     <div class="highlight-content reveal reveal-delay-1">
-      <span class="section-eyebrow2">${p.bannerNomeSecao || "Produto da estação"}</span>
-      <h2 class="highlight-title">${p.bannerTitulo || p.nome}</h2>
-      <p class="highlight-text">${p.bannerTexto || p.descricao || ""}</p>
+      <span class="section-eyebrow2">${escapeHtml(p.bannerNomeSecao || "Produto da estação")}</span>
+      <h2 class="highlight-title">${escapeHtml(p.bannerTitulo || p.nome)}</h2>
+      <p class="highlight-text">${escapeHtml(p.bannerTexto || p.descricao || "")}</p>
       ${(p.bannerTags && p.bannerTags.length > 0) ? `
         <div class="highlight-notes">
-          ${p.bannerTags.map((tag) => `<span class="note-pill">${tag}</span>`).join("")}
+          ${p.bannerTags.map((tag) => `<span class="note-pill">${escapeHtml(tag)}</span>`).join("")}
         </div>
       ` : ""}
       <div class="highlight-price">
         <small>A partir de</small>
-        ${formatarPreco(p.precoVarejo)}
+        ${formatarPreco(preco.precoFinal)}
+        ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
       </div>
-      <a href="produto.html?id=${p.id}" class="btn-primary">
+      <a href="produto.html?id=${encodeURIComponent(p.id)}" class="btn-primary">
         Quero este produto
       </a>
     </div>
@@ -203,6 +320,8 @@ document.getElementById("highlight-next")?.addEventListener("click", () => {
 });
 
 // ── Inicialização ──────────────────────────────────────────────────────────
-carregarCategoriasVisuais();
+iniciarCarrosselAnuncio();
 carregarDestaques();
+carregarProdutosHome();
+carregarCategoriasVisuais();
 carregarBannerHero();

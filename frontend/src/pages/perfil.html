@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/style.css">
-  <link rel="stylesheet" href="/styles/perfil.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/perfil.css">
 </head>
 <body>
 
@@ -115,6 +115,7 @@
       <button class="perfil-tab-btn active" data-tab="dados">Dados pessoais</button>
       <button class="perfil-tab-btn" data-tab="seguranca">Segurança</button>
       <button class="perfil-tab-btn" data-tab="enderecos">Endereços</button>
+      <button class="perfil-tab-btn" data-tab="revendedor" id="tab-revendedor">Atacado / Revenda</button>
     </div>
 
     <!-- Aba: Dados pessoais -->
@@ -199,12 +200,45 @@
         </div>
       </form>
     </section>
+
+    <!-- Aba: Atacado / Revenda (A5 — troca de tipo de conta sem criar outra) -->
+    <section class="perfil-painel" id="painel-revendedor">
+      <div id="revendedor-status"></div>
+
+      <form id="form-revendedor" style="display:none;">
+        <p class="perfil-campo" style="color:var(--text-muted); font-size:0.85rem;">
+          Informe o CNPJ da sua loja para desbloquear os preços de atacado.
+          Sua conta continua a mesma — apenas passa por uma análise da equipe.
+        </p>
+        <div class="perfil-campo">
+          <label for="campo-cnpj">CNPJ</label>
+          <input type="text" id="campo-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+          <small id="cnpj-status-perfil"></small>
+        </div>
+        <div class="perfil-campo">
+          <label for="campo-razao-social">Razão social</label>
+          <input type="text" id="campo-razao-social" placeholder="Nome da empresa">
+        </div>
+        <div class="perfil-acoes">
+          <button type="submit" class="btn-primary" id="btn-solicitar-revenda">Solicitar conta de revendedor</button>
+          <span class="perfil-msg" id="msg-revendedor"></span>
+        </div>
+      </form>
+
+      <div class="perfil-zona-perigo" id="bloco-voltar-cliente" style="display:none;">
+        <h3>Voltar para conta de cliente</h3>
+        <p>Sua aprovação fica guardada — se quiser voltar ao atacado depois, não precisa de nova análise.</p>
+        <button class="btn-sair-conta" id="btn-voltar-cliente">Usar como conta de cliente</button>
+      </div>
+    </section>
   </main>
 
-  <script src="/services/script.js"></script>
-  <script type="module" src="/services/nav-conta.js"></script>
-  <script type="module" src="/services/nav-carrinho.js"></script>
+  <script type="module" src="services/script.js"></script>
+  <script src="services/tema.js"></script>
+  <script src="services/nav-busca.js"></script>
+  <script type="module" src="services/nav-conta.js"></script>
+  <script type="module" src="services/nav-carrinho.js"></script>
   <script type="module" src="./js/perfil.js"></script>
-  <script type="module" src="/services/nav-mobile-menu.js"></script>
+  <script type="module" src="services/nav-mobile-menu.js"></script>
 </body>
 </html>

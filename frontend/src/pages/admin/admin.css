@@ -4,12 +4,101 @@
   box-sizing: border-box;
 }
 
+/* Paleta oficial (B4) — o admin não importa style.css, então as variáveis
+   são definidas aqui também. O switch de tema (A6) alterna via
+   body[data-theme], igual à loja (services/tema.js). */
+:root {
+  --color-1: #9C6644;
+  --color-2: #7E553A;
+  --color-3: #B08A69;
+  --color-4: #DFB793;
+  --color-5: #EEE0D5;
+
+  --bg: #241812;
+  --surface: #2E2018;
+  --surface-soft: rgba(36, 24, 18, 0.92);
+  --gold: var(--color-3);
+  --gold-dark: var(--color-2);
+  --text-main: var(--color-5);
+  --text-muted: rgba(238, 224, 213, 0.62);
+  --border: rgba(176, 138, 105, 0.25);
+}
+
+body[data-theme="light"] {
+  --bg: var(--color-5);
+  --surface: #F7EFE6;
+  --surface-soft: rgba(247, 239, 230, 0.92);
+  --gold: var(--color-1);
+  --gold-dark: var(--color-2);
+  --text-main: #4A3423;
+  --text-muted: rgba(74, 52, 35, 0.7);
+  --border: rgba(156, 102, 68, 0.28);
+}
+
 body {
   margin: 0;
   font-family: 'Jost', sans-serif;
-  background: var(--bg, #0f0e0d);
-  color: var(--text-main, #f5f0e8);
+  background: var(--bg);
+  color: var(--text-main);
+  transition: background 0.35s ease, color 0.35s ease;
 }
+
+/* ── Switch de tema (mesmo componente da loja) ──────────────────────────── */
+.admin-tema-wrap {
+  padding: 0.8rem 0.5rem 0;
+}
+
+.theme-toggle {
+  width: 76px;
+  height: 36px;
+  position: relative;
+  padding-left: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+  display: flex;
+  align-items: center;
+}
+
+.theme-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.theme-icon--moon { left: 8px; }
+.theme-icon--sun { right: 8px; }
+
+.theme-toggle__circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--gold);
+  transition: transform 0.3s ease, background 0.3s ease;
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+.theme-toggle.active .theme-toggle__circle {
+  transform: translate(40px, -50%);
+  background: var(--gold-dark);
+}
+
+.theme-toggle.active .theme-icon--moon { opacity: 0.35; }
+.theme-toggle.active .theme-icon--sun { opacity: 1; }
+.theme-toggle .theme-icon--moon { opacity: 1; }
+.theme-toggle .theme-icon--sun { opacity: 0.35; }
 
 .admin-layout {
   display: grid;
@@ -20,7 +109,7 @@ body {
 /* ── Sidebar ───────────────────────────────────────────────────────────── */
 .admin-sidebar {
   background: var(--surface, #1a1816);
-  border-right: 1px solid var(--border, rgba(201,168,76,0.15));
+  border-right: 1px solid var(--border, rgba(176, 138, 105,0.15));
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -41,7 +130,7 @@ body {
   height: 36px;
   flex-shrink: 0;
   border-radius: 6px;
-  border: 1px solid var(--border, rgba(201,168,76,0.2));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.2));
   background: transparent;
   color: var(--text-main, #f5f0e8);
   cursor: pointer;
@@ -55,13 +144,13 @@ body {
 .admin-logo {
   font-family: 'Playfair Display', serif;
   font-size: 1.2rem;
-  color: var(--gold, #C9A84C);
+  color: var(--gold, #B08A69);
   margin-bottom: 0.3rem;
   padding: 0 0.5rem;
 }
 
 .admin_logo_nome {
-   color: var(--gold, #C9A84C);
+   color: var(--gold, #B08A69);
    text-decoration: none;
 }
 
@@ -95,20 +184,20 @@ body {
 }
 
 .admin-nav a:hover {
-  background: rgba(201,168,76,0.08);
-  color: var(--gold, #C9A84C);
+  background: rgba(176, 138, 105,0.08);
+  color: var(--gold, #B08A69);
 }
 
 .admin-nav a.active {
-  background: rgba(201,168,76,0.12);
-  color: var(--gold, #C9A84C);
+  background: rgba(176, 138, 105,0.12);
+  color: var(--gold, #B08A69);
   font-weight: 600;
 }
 
 .admin-sidebar-rodape {
   margin-top: auto;
   padding-top: 1rem;
-  border-top: 1px solid var(--border, rgba(201,168,76,0.15));
+  border-top: 1px solid var(--border, rgba(176, 138, 105,0.15));
 }
 
 .admin-sidebar-rodape a {
@@ -120,7 +209,7 @@ body {
 }
 
 .admin-sidebar-rodape a:hover {
-  color: var(--gold, #C9A84C);
+  color: var(--gold, #B08A69);
 }
 
 /* ── Conteúdo principal ────────────────────────────────────────────────── */
@@ -158,7 +247,7 @@ body {
 
 .admin-card-metrica {
   background: var(--surface, #1a1816);
-  border: 1px solid var(--border, rgba(201,168,76,0.15));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.15));
   border-radius: 8px;
   padding: 1.3rem;
 }
@@ -166,7 +255,7 @@ body {
 .admin-card-metrica .valor {
   font-family: 'Playfair Display', serif;
   font-size: 1.9rem;
-  color: var(--gold, #C9A84C);
+  color: var(--gold, #B08A69);
   margin-bottom: 0.3rem;
 }
 
@@ -180,7 +269,7 @@ body {
 /* ── Seções / blocos ───────────────────────────────────────────────────── */
 .admin-bloco {
   background: var(--surface, #1a1816);
-  border: 1px solid var(--border, rgba(201,168,76,0.15));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.15));
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -194,7 +283,7 @@ body {
   text-transform: uppercase;
   margin-bottom: 1.2rem;
   padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border, rgba(201,168,76,0.15));
+  border-bottom: 1px solid var(--border, rgba(176, 138, 105,0.15));
 }
 
 /* ── Tabelas ───────────────────────────────────────────────────────────── */
@@ -223,17 +312,17 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted, #999);
-  border-bottom: 1px solid var(--border, rgba(201,168,76,0.15));
+  border-bottom: 1px solid var(--border, rgba(176, 138, 105,0.15));
 }
 
 .admin-tabela td {
   padding: 0.7rem 0.6rem;
-  border-bottom: 1px solid rgba(201,168,76,0.08);
+  border-bottom: 1px solid rgba(176, 138, 105,0.08);
   vertical-align: middle;
 }
 
 .admin-tabela tr:hover td {
-  background: rgba(201,168,76,0.04);
+  background: rgba(176, 138, 105,0.04);
 }
 
 .admin-tabela img.thumb {
@@ -282,13 +371,13 @@ body {
 }
 
 .admin-btn-primary {
-  background: var(--gold, #C9A84C);
+  background: var(--gold, #B08A69);
   color: #1a1816;
 }
 
 .admin-btn-outline {
   background: transparent;
-  border: 1px solid var(--border, rgba(201,168,76,0.3));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.3));
   color: var(--text-main, #f5f0e8);
 }
 
@@ -322,7 +411,7 @@ body {
 
 .admin-modal {
   background: var(--surface, #1a1816);
-  border: 1px solid var(--border, rgba(201,168,76,0.2));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.2));
   border-radius: 10px;
   padding: 2rem;
   max-width: 560px;
@@ -357,7 +446,7 @@ body {
   padding: 0.65rem 0.8rem;
   font-family: 'Jost', sans-serif;
   font-size: 0.88rem;
-  border: 1px solid var(--border, rgba(201,168,76,0.2));
+  border: 1px solid var(--border, rgba(176, 138, 105,0.2));
   border-radius: 5px;
   background: var(--bg, #0f0e0d);
   color: var(--text-main, #f5f0e8);
@@ -367,7 +456,7 @@ body {
 .admin-campo input:focus,
 .admin-campo select:focus,
 .admin-campo textarea:focus {
-  border-color: var(--gold, #C9A84C);
+  border-color: var(--gold, #B08A69);
 }
 
 .admin-campo-grid {
@@ -419,7 +508,7 @@ body {
   .admin-sidebar {
     padding: 0.9rem 1.2rem;
     border-right: none;
-    border-bottom: 1px solid var(--border, rgba(201,168,76,0.15));
+    border-bottom: 1px solid var(--border, rgba(176, 138, 105,0.15));
     position: sticky;
     top: 0;
     z-index: 50;

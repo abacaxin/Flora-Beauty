@@ -2,9 +2,11 @@ import { protegerPaginaAdmin } from "./admin-auth.js";
 import {
   criarProduto,
   atualizarProduto,
-  excluirProduto
+  excluirProduto,
+  estoquePorModo
 } from "../../services/produtos.js";
 import { listarCategorias } from "../../services/categorias.js";
+import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -29,6 +31,8 @@ const inputBusca = document.getElementById("busca-produtos-admin");
 const selectCategoria = document.getElementById("p-categoria");
 const selectBannerHero = document.getElementById("p-banner-hero");
 const camposBannerHero = document.getElementById("campos-banner-hero");
+const selectDescontoAtivo = document.getElementById("p-desconto-ativo");
+const camposDesconto = document.getElementById("campos-desconto");
 const listaImagens = document.getElementById("lista-imagens-produto");
 const btnAddImagem = document.getElementById("btn-add-imagem");
 
@@ -67,9 +71,9 @@ function ordenarLista(lista, criterio) {
     case "preco-menor":
       return copia.sort((a, b) => (a.precoVarejo || 0) - (b.precoVarejo || 0));
     case "estoque-maior":
-      return copia.sort((a, b) => (b.estoque || 0) - (a.estoque || 0));
+      return copia.sort((a, b) => estoquePorModo(b, "varejo") - estoquePorModo(a, "varejo"));
     case "estoque-menor":
-      return copia.sort((a, b) => (a.estoque || 0) - (b.estoque || 0));
+      return copia.sort((a, b) => estoquePorModo(a, "varejo") - estoquePorModo(b, "varejo"));
     default:
       return copia; // "recentes" = ordem original (mais recentes primeiro)
   }
@@ -110,7 +114,8 @@ function renderizarTabela() {
           <th>SKU</th>
           <th>Categoria</th>
           <th>Preço</th>
-          <th>Estoque</th>
+          <th>Est. varejo</th>
+          <th>Est. atacado</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
@@ -118,17 +123,21 @@ function renderizarTabela() {
       <tbody>
         ${lista.map((p) => `
           <tr>
-            <td><img class="thumb" src="${primeiraImagem(p) || '../images/logo.ico'}" alt=""></td>
-            <td>${p.nome} ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}</td>
-            <td>${p.sku || "—"}</td>
-            <td>${nomeCategoria(p.categoria)}</td>
+            <td><img class="thumb" src="${urlImagemSegura(primeiraImagem(p), '../images/logo.ico')}" alt=""></td>
+            <td>${escapeHtml(p.nome)}
+              ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}
+              ${p.descontoAtivo ? `<span class="badge badge-pendente" title="Produto em desconto">-${Number(p.descontoPercentual) || 0}%</span>` : ""}
+            </td>
+            <td>${escapeHtml(p.sku || "—")}</td>
+            <td>${escapeHtml(nomeCategoria(p.categoria))}</td>
             <td>${formatarPreco(p.precoVarejo)}</td>
-            <td>${p.estoque ?? 0}</td>
+            <td>${estoquePorModo(p, "varejo")}</td>
+            <td>${estoquePorModo(p, "atacado")}</td>
             <td><span class="badge ${p.ativo ? 'badge-aprovado' : 'badge-rejeitado'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
             <td>
               <div class="admin-acoes-linha">
-                <button class="admin-btn admin-btn-outline admin-btn-sm btn-editar" data-id="${p.id}">Editar</button>
-                <button class="admin-btn admin-btn-danger admin-btn-sm btn-excluir" data-id="${p.id}">Excluir</button>
+                <button class="admin-btn admin-btn-outline admin-btn-sm btn-editar" data-id="${escapeHtml(p.id)}">Editar</button>
+                <button class="admin-btn admin-btn-danger admin-btn-sm btn-excluir" data-id="${escapeHtml(p.id)}">Excluir</button>
               </div>
             </td>
           </tr>
@@ -211,6 +220,9 @@ function limparForm() {
   selectBannerHero.value = "false";
   camposBannerHero.style.display = "none";
   document.getElementById("p-banner-nome-secao").value = "Produto da estação";
+  selectDescontoAtivo.value = "false";
+  camposDesconto.style.display = "none";
+  document.getElementById("p-estoque-atacado").value = 0;
   modalMsg.style.display = "none";
   resetarListaImagens();
 }
@@ -238,11 +250,17 @@ function abrirModalEdicao(id) {
   document.getElementById("p-descricao").value = p.descricao || "";
   preencherListaImagens(p);
   document.getElementById("p-preco-varejo").value = p.precoVarejo || "";
-  document.getElementById("p-estoque").value = p.estoque ?? 0;
+  // Compatibilidade: produtos antigos guardavam tudo em "estoque" — ele
+  // vale como estoque de varejo até o produto ser salvo de novo.
+  document.getElementById("p-estoque-varejo").value = estoquePorModo(p, "varejo");
   document.getElementById("p-preco-atacado").value = p.precoAtacado || "";
-  document.getElementById("p-qtd-min-atacado").value = p.qtdMinimaAtacado || "";
+  document.getElementById("p-estoque-atacado").value = estoquePorModo(p, "atacado");
   document.getElementById("p-ativo").value = String(p.ativo !== false);
   document.getElementById("p-destaque").value = String(p.destaque === true);
+
+  selectDescontoAtivo.value = String(p.descontoAtivo === true);
+  camposDesconto.style.display = p.descontoAtivo === true ? "block" : "none";
+  document.getElementById("p-desconto-percentual").value = p.descontoPercentual || "";
 
   selectBannerHero.value = String(p.bannerHero === true);
   camposBannerHero.style.display = p.bannerHero ? "block" : "none";
@@ -288,11 +306,18 @@ selectBannerHero.addEventListener("change", () => {
   camposBannerHero.style.display = selectBannerHero.value === "true" ? "block" : "none";
 });
 
+// Desconto opcional (A2): os campos só aparecem quando ligado, igual ao banner.
+selectDescontoAtivo.addEventListener("change", () => {
+  camposDesconto.style.display = selectDescontoAtivo.value === "true" ? "block" : "none";
+});
+
 form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   modalMsg.style.display = "none";
 
   const bannerHero = selectBannerHero.value === "true";
+  const descontoAtivo = selectDescontoAtivo.value === "true";
+  const descontoPercentual = Number(document.getElementById("p-desconto-percentual").value) || 0;
   const { imagemURL, imagensExtras } = coletarImagens();
 
   const dados = {
@@ -305,9 +330,16 @@ form.addEventListener("submit", async (evento) => {
     imagemURL,
     imagensExtras,
     precoVarejo: Number(document.getElementById("p-preco-varejo").value) || 0,
-    estoque: Number(document.getElementById("p-estoque").value) || 0,
+    // Estoques independentes (A4). O campo legado "estoque" é zerado para
+    // não conflitar com estoqueVarejo daqui pra frente.
+    estoqueVarejo: Number(document.getElementById("p-estoque-varejo").value) || 0,
+    estoqueAtacado: Number(document.getElementById("p-estoque-atacado").value) || 0,
+    estoque: null,
     precoAtacado: Number(document.getElementById("p-preco-atacado").value) || null,
-    qtdMinimaAtacado: Number(document.getElementById("p-qtd-min-atacado").value) || null,
+    // Desconto opcional (A2) — o preço final é derivado no servidor.
+    descontoAtivo,
+    descontoTipo: descontoAtivo ? "percentual" : null,
+    descontoPercentual: descontoAtivo ? descontoPercentual : null,
     ativo: document.getElementById("p-ativo").value === "true",
     destaque: document.getElementById("p-destaque").value === "true",
     bannerHero,
@@ -331,6 +363,20 @@ form.addEventListener("submit", async (evento) => {
 
   if (!dados.categoria) {
     modalMsg.textContent = "Selecione uma categoria (crie uma em \"Categorias\" se a lista estiver vazia).";
+    modalMsg.classList.remove("sucesso");
+    modalMsg.style.display = "block";
+    return;
+  }
+
+  if (descontoAtivo && (descontoPercentual < 1 || descontoPercentual > 90)) {
+    modalMsg.textContent = "O desconto deve ser um percentual entre 1 e 90.";
+    modalMsg.classList.remove("sucesso");
+    modalMsg.style.display = "block";
+    return;
+  }
+
+  if ((dados.precoAtacado || 0) > 0 && dados.estoqueAtacado <= 0) {
+    modalMsg.textContent = "Produto com preço de atacado precisa de estoque de atacado (ou zere o preço de atacado).";
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;

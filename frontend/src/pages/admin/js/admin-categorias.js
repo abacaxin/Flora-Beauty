@@ -1,5 +1,6 @@
 import { protegerPaginaAdmin } from "./admin-auth.js";
 import { listarCategorias, criarCategoria, atualizarCategoria, excluirCategoria } from "../../services/categorias.js";
+import { escapeHtml, urlImagemSegura } from "../../services/seguranca.js";
 
 let categoriasCache = [];
 let categoriaEditandoId = null;
@@ -31,13 +32,13 @@ async function carregarTabela() {
       <tbody>
         ${categoriasCache.map((c) => `
           <tr>
-            <td>${c.imagemURL ? `<img class="thumb" src="${c.imagemURL}" alt="">` : "—"}</td>
-            <td>${c.nome}</td>
-            <td><code>${c.slug}</code></td>
+            <td>${c.imagemURL ? `<img class="thumb" src="${urlImagemSegura(c.imagemURL, '../images/logo.ico')}" alt="">` : "—"}</td>
+            <td>${escapeHtml(c.nome)}</td>
+            <td><code>${escapeHtml(c.slug)}</code></td>
             <td>
               <div class="admin-acoes-linha">
-                <button class="admin-btn admin-btn-outline admin-btn-sm btn-editar-cat" data-id="${c.id}">Editar</button>
-                <button class="admin-btn admin-btn-danger admin-btn-sm btn-excluir-cat" data-id="${c.id}">Excluir</button>
+                <button class="admin-btn admin-btn-outline admin-btn-sm btn-editar-cat" data-id="${escapeHtml(c.id)}">Editar</button>
+                <button class="admin-btn admin-btn-danger admin-btn-sm btn-excluir-cat" data-id="${escapeHtml(c.id)}">Excluir</button>
               </div>
             </td>
           </tr>

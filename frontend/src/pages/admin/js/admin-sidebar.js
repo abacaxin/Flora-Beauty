@@ -42,9 +42,19 @@ function montarSidebar() {
       <div class="admin-sidebar-rodape">
         <a href="../index.html">← Voltar para a loja</a>
         <a href="#" id="admin-btn-logout">Sair da conta</a>
+        <div class="admin-tema-wrap">
+          <button id="theme-toggle-admin" class="theme-toggle" aria-label="Alternar tema claro e escuro">
+            <span class="theme-icon theme-icon--moon">🌙</span>
+            <span class="theme-icon theme-icon--sun">☀️</span>
+            <span class="theme-toggle__circle"></span>
+          </button>
+        </div>
       </div>
     </aside>
   `;
+
+  // O switch de tema é ligado por services/tema.js, que roda DEPOIS deste
+  // script (ordem dos <script> na página) — o botão precisa existir antes.
 
   const sidebar = document.getElementById("admin-sidebar");
   const toggle = document.getElementById("admin-sidebar-toggle");

@@ -1,6 +1,13 @@
 // ── Serviço de Autenticação Flora Boutique ────────────────────────────────
 // Centraliza cadastro, login, logout e leitura do perfil/role do usuário.
 // Qualquer página que precise de auth importa só daqui.
+//
+// SEGURANÇA (C2): o documento usuarios/{uid} NUNCA é criado antes do
+// e-mail estar verificado — as firestore.rules exigem
+// request.auth.token.email_verified. O perfil nasce no primeiro acesso
+// já verificado (garantirPerfil). Isso impede scripts em loop de encher
+// o banco com contas fantasma: sem clicar no link do e-mail, nada é
+// gravado no Firestore.
 
 import { auth, db } from "./firebase-config.js";
 import {
@@ -38,17 +45,56 @@ export function traduzErroAuth(codigo) {
     "auth/requires-recent-login": "Por segurança, confirme sua senha atual para continuar.",
     "auth/popup-closed-by-user": "Login cancelado.",
     "auth/cancelled-popup-request": "Login cancelado.",
-    "auth/account-exists-with-different-credential": "Esse e-mail já está cadastrado com senha. Faça login com e-mail e senha."
+    "auth/account-exists-with-different-credential": "Esse e-mail já está cadastrado com senha. Faça login com e-mail e senha.",
+    "auth/firebase-app-check-token-is-invalid.": "Não foi possível validar seu acesso. Recarregue a página e tente de novo."
   };
   return mapa[codigo] || "Ocorreu um erro inesperado. Tente novamente.";
 }
 
+// ── Cadastro pendente (aguardando verificação de e-mail) ──────────────────
+// Guardamos localmente os dados informados no cadastro (nome, CNPJ...)
+// para criar o perfil no primeiro login verificado. Se a pessoa confirmar
+// o e-mail em OUTRO dispositivo, o perfil nasce como cliente comum e ela
+// pode solicitar a conta de revendedor depois, pelo perfil (A5).
+const CHAVE_CADASTRO_PENDENTE = "floraCadastroPendente";
+
+function salvarCadastroPendente(uid, dados) {
+  try {
+    localStorage.setItem(CHAVE_CADASTRO_PENDENTE, JSON.stringify({ uid, ...dados }));
+  } catch {
+    // localStorage indisponível (modo anônimo estrito) — segue sem ele.
+  }
+}
+
+function lerCadastroPendente(uid) {
+  try {
+    const bruto = localStorage.getItem(CHAVE_CADASTRO_PENDENTE);
+    if (!bruto) return null;
+    const dados = JSON.parse(bruto);
+    return dados.uid === uid ? dados : null;
+  } catch {
+    return null;
+  }
+}
+
+function limparCadastroPendente() {
+  try {
+    localStorage.removeItem(CHAVE_CADASTRO_PENDENTE);
+  } catch {
+    // sem localStorage, nada a limpar
+  }
+}
+
 /**
- * Cria uma conta nova e o documento de perfil no Firestore.
+ * Cria a conta no Firebase Auth e dispara o e-mail de verificação.
+ * O documento de perfil NÃO é criado aqui — só depois do e-mail
+ * verificado (ver garantirPerfil). Se a pessoa informar um e-mail
+ * inexistente, ela nunca recebe o link e a conta nunca é ativada.
+ *
  * @param {string} nome
  * @param {string} email
  * @param {string} senha
- * @param {{cnpj?: string, razaoSocial?: string, provavelMEI?: boolean|null, porteEmpresa?: string|null}} [dadosRevendedor] - se informado, a conta nasce como revendedor pendente de aprovação.
+ * @param {{cnpj?: string, razaoSocial?: string, provavelMEI?: boolean|null, porteEmpresa?: string|null}} [dadosRevendedor]
  */
 export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = null) {
   const credencial = await createUserWithEmailAndPassword(auth, email, senha);
@@ -56,13 +102,42 @@ export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = nul
 
   await updateProfile(usuario, { displayName: nome });
 
-  // Documento de perfil — TODA conta nova nasce com role "cliente"
-  // (o "role" é só admin/cliente, separado de "tipoConta" abaixo).
-  // Promover alguém a "admin" só pode ser feito manualmente no Firebase
-  // Console ou via Cloud Function administrativa (nunca pelo cliente).
-  const dadosPerfil = {
+  salvarCadastroPendente(usuario.uid, {
     nome,
-    email,
+    dadosRevendedor: dadosRevendedor || null
+  });
+
+  // O e-mail de verificação é o que "ativa" a conta. Se falhar aqui
+  // (rede instável), a pessoa pode pedir reenvio pela tela de login.
+  try {
+    await sendEmailVerification(usuario);
+  } catch (erro) {
+    console.error("Não foi possível enviar o e-mail de verificação agora:", erro);
+  }
+
+  return usuario;
+}
+
+/**
+ * Garante que usuarios/{uid} existe para um usuário com e-mail já
+ * verificado. Chamado automaticamente por observarAuth no primeiro
+ * acesso verificado. Retorna o perfil (existente ou recém-criado).
+ */
+export async function garantirPerfil(usuario) {
+  const ref = doc(db, "usuarios", usuario.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+
+  if (usuario.emailVerified !== true) return null;
+
+  const pendente = lerCadastroPendente(usuario.uid);
+  const dadosRevendedor = pendente?.dadosRevendedor || null;
+
+  // TODA conta nova nasce com role "cliente" (as rules rejeitam qualquer
+  // outra coisa). Promover a "admin" só manualmente no Firebase Console.
+  const dadosPerfil = {
+    nome: pendente?.nome || usuario.displayName || "Cliente",
+    email: usuario.email,
     role: "cliente",
     tipoConta: dadosRevendedor ? "revendedor" : "cliente",
     criadoEm: serverTimestamp()
@@ -72,27 +147,16 @@ export async function cadastrarUsuario(nome, email, senha, dadosRevendedor = nul
     dadosPerfil.cnpj = dadosRevendedor.cnpj;
     dadosPerfil.razaoSocial = dadosRevendedor.razaoSocial;
     // Resultado (informativo) da consulta pública à BrasilAPI feita no
-    // momento do cadastro — ajuda o admin a decidir a aprovação, mas
-    // NUNCA é usado como trava de segurança por si só.
+    // cadastro — ajuda o admin a decidir a aprovação, nunca é trava.
     dadosPerfil.provavelMEI = dadosRevendedor.provavelMEI ?? null;
     dadosPerfil.porteEmpresa = dadosRevendedor.porteEmpresa ?? null;
-    // Toda conta de revendedor nasce pendente — só o admin aprova
-    // manualmente depois de confirmar que é uma loja de verdade.
+    // Conta de revendedor nasce pendente — só o admin aprova.
     dadosPerfil.statusRevendedor = "pendente";
   }
 
-  await setDoc(doc(db, "usuarios", usuario.uid), dadosPerfil);
-
-  // Manda o e-mail de verificação automaticamente. Se isso falhar (rede
-  // instável, por exemplo), não impede a conta de ter sido criada — a
-  // pessoa pode pedir reenvio depois pela tela de login.
-  try {
-    await sendEmailVerification(usuario);
-  } catch (erro) {
-    console.error("Não foi possível enviar o e-mail de verificação agora:", erro);
-  }
-
-  return usuario;
+  await setDoc(ref, dadosPerfil);
+  limparCadastroPendente();
+  return dadosPerfil;
 }
 
 /**
@@ -105,35 +169,24 @@ export async function reenviarVerificacaoEmail(usuario) {
 /**
  * Faz login (ou cadastro automático, se for a primeira vez) usando a
  * conta Google da pessoa. Contas criadas assim já chegam com o e-mail
- * verificado, porque o próprio Google já confirmou aquele e-mail.
+ * verificado — o perfil é criado na hora por garantirPerfil.
  */
 export async function loginComGoogle() {
   const provedor = new GoogleAuthProvider();
   const credencial = await signInWithPopup(auth, provedor);
   const usuario = credencial.user;
-
-  // Se é a primeira vez dessa conta no nosso site, cria o documento de
-  // perfil — do contrário, mantém o que já existia (não sobrescreve role,
-  // tipoConta, etc. de uma conta já existente).
-  const ref = doc(db, "usuarios", usuario.uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    await setDoc(ref, {
-      nome: usuario.displayName || "Cliente",
-      email: usuario.email,
-      role: "cliente",
-      tipoConta: "cliente",
-      criadoEm: serverTimestamp()
-    });
-  }
-
+  await garantirPerfil(usuario);
   return usuario;
 }
 
+// Campos do perfil que o próprio usuário pode editar (C5). Qualquer outra
+// chave passada para atualizarPerfil é IGNORADA — nunca use spread de um
+// objeto vindo de formulário direto no updateDoc.
+const CAMPOS_PERFIL_EDITAVEIS = ["nome", "telefone", "fotoURL"];
+
 /**
- * Atualiza dados do perfil (nome, telefone, fotoURL) no Firestore e,
- * quando aplicável, também no próprio Firebase Auth (nome/foto).
+ * Atualiza dados do perfil no Firestore e, quando aplicável, também no
+ * próprio Firebase Auth (nome/foto). Só os campos da allowlist passam.
  * @param {import("https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js").User} usuario
  * @param {{nome?: string, telefone?: string, fotoURL?: string}} dados
  */
@@ -146,9 +199,43 @@ export async function atualizarPerfil(usuario, dados) {
     await updateProfile(usuario, atualizacoesAuth);
   }
 
+  const atualizacoes = { atualizadoEm: serverTimestamp() };
+  for (const campo of CAMPOS_PERFIL_EDITAVEIS) {
+    if (dados[campo] !== undefined) atualizacoes[campo] = dados[campo];
+  }
+
+  const ref = doc(db, "usuarios", usuario.uid);
+  await updateDoc(ref, atualizacoes);
+}
+
+/**
+ * Troca de tipo de conta SEM criar conta nova (A5): o usuário informa o
+ * CNPJ e vira revendedor com status "pendente" — o acesso ao atacado só
+ * abre depois da aprovação do admin (as rules impedem o próprio usuário
+ * de se marcar "aprovado").
+ */
+export async function solicitarContaRevendedor(usuario, { cnpj, razaoSocial, provavelMEI = null, porteEmpresa = null }) {
   const ref = doc(db, "usuarios", usuario.uid);
   await updateDoc(ref, {
-    ...dados,
+    tipoConta: "revendedor",
+    cnpj,
+    razaoSocial,
+    provavelMEI,
+    porteEmpresa,
+    statusRevendedor: "pendente",
+    atualizadoEm: serverTimestamp()
+  });
+}
+
+/**
+ * Volta a conta para o modo cliente (A5). O histórico de aprovação
+ * (statusRevendedor) é preservado — se a pessoa já era aprovada e quiser
+ * voltar ao atacado depois, não precisa de nova análise.
+ */
+export async function voltarParaContaCliente(usuario) {
+  const ref = doc(db, "usuarios", usuario.uid);
+  await updateDoc(ref, {
+    tipoConta: "cliente",
     atualizadoEm: serverTimestamp()
   });
 }
@@ -173,8 +260,7 @@ export async function loginUsuario(email, senha) {
 
 /**
  * Indica se a conta logada (criada por e-mail/senha) já confirmou o
- * e-mail. Contas criadas via Google sempre retornam true, porque o
- * Google já garante que aquele e-mail é real e pertence à pessoa.
+ * e-mail. Contas criadas via Google sempre retornam true.
  */
 export function emailEstaVerificado(usuario) {
   return usuario.emailVerified === true;
@@ -199,6 +285,8 @@ export async function buscarPerfil(uid) {
 /**
  * Observa o estado de autenticação. Chama o callback com
  * { usuario, perfil } sempre que o login mudar (inclusive null/null).
+ * No primeiro acesso com e-mail já verificado, cria o perfil que ficou
+ * pendente desde o cadastro (ver garantirPerfil).
  */
 export function observarAuth(callback) {
   return onAuthStateChanged(auth, async (usuario) => {
@@ -206,7 +294,15 @@ export function observarAuth(callback) {
       callback({ usuario: null, perfil: null });
       return;
     }
-    const perfil = await buscarPerfil(usuario.uid);
+    let perfil = null;
+    try {
+      perfil = await buscarPerfil(usuario.uid);
+      if (!perfil && usuario.emailVerified === true) {
+        perfil = await garantirPerfil(usuario);
+      }
+    } catch (erro) {
+      console.error("Erro ao carregar o perfil:", erro);
+    }
     callback({ usuario, perfil });
   });
 }

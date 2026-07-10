@@ -34,7 +34,7 @@ body {
 .container h1 {
     font-size: 32px;
     text-align: center;
-    color: #111111;
+    color: #7E553A;
     font-weight: 700;
     margin-bottom: 10px;
 }
@@ -62,8 +62,8 @@ body {
 
 .input-box input:focus {
     background-color: #ffffff;
-    border-color: #d4af37; /* Toque dourado premium ao focar no campo */
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    border-color: var(--gold, #B08A69); /* Toque dourado premium ao focar no campo */
+    box-shadow: 0 0 8px rgba(156, 102, 68, 0.45);
 }
 
 .input-box input::placeholder {
@@ -98,29 +98,29 @@ body {
 }
 
 .remember-forgot label input {
-    accent-color: #111111;
+    accent-color: #7E553A;
     margin-right: 6px;
 }
 
 .remember-forgot a {
     text-decoration: none;
-    color: #111111;
+    color: #7E553A;
     font-weight: 500;
     transition: color 0.3s;
 }
 
 .remember-forgot a:hover {
     text-decoration: underline;
-    color: #d4af37;
+    color: var(--gold, #B08A69);
 }
 
 /* Botão de Login Principal */
 .login {
     width: 100%;
     height: 50px;
-    background-color: #111111; /* Botão escuro sólido gera contraste marcante */
+    background-color: #7E553A; /* Botão escuro sólido gera contraste marcante */
     color: #ffffff;
-    border: 1px solid #111111;
+    border: 1px solid #7E553A;
     border-radius: 40px;
     cursor: pointer;
     font-size: 16px;
@@ -131,8 +131,8 @@ body {
 
 .login:hover:not(:disabled) {
     background-color: transparent;
-    color: #111111;
-    border-color: #111111;
+    color: #7E553A;
+    border-color: #7E553A;
 }
 
 .login:disabled {
@@ -150,14 +150,14 @@ body {
 
 .register-link a {
     text-decoration: none;
-    color: #111111;
+    color: #7E553A;
     font-weight: 700;
     transition: color 0.3s;
 }
 
 .register-link a:hover {
     text-decoration: underline;
-    color: #d4af37;
+    color: var(--gold, #B08A69);
 }
 
 /* Links adicionais e Divisores */
@@ -173,7 +173,7 @@ body {
 
 .voltar-link:hover {
     text-decoration: underline;
-    color: #111111;
+    color: #7E553A;
 }
 
 .divisor-ou {
@@ -199,7 +199,7 @@ body {
 /* Botão Google */
 .login-google {
     background: #ffffff;
-    color: #111111;
+    color: #7E553A;
     border: 1px solid rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
@@ -209,7 +209,7 @@ body {
 
 .login-google:hover {
     background: #f9f9f9;
-    border-color: #111111;
+    border-color: #7E553A;
 }
 
 /* Mensagens de Feedback */
@@ -229,7 +229,7 @@ body {
 /* Alertas de Verificação */
 .verificacao-alerta {
     background: rgba(212, 175, 55, 0.15);
-    border: 1px solid rgba(212, 175, 55, 0.4);
+    border: 1px solid rgba(156, 102, 68, 0.45);
     border-radius: 8px;
     padding: 12px;
     font-size: 13px;
@@ -243,7 +243,7 @@ body {
     margin: 6px auto 0;
     background: none;
     border: none;
-    color: #111111;
+    color: #7E553A;
     text-decoration: underline;
     cursor: pointer;
     font-size: 12px;

@@ -148,16 +148,13 @@ linkEsqueci.addEventListener("click", async (evento) => {
 const toggleSenha = document.getElementById("toggle-senha");
 
 toggleSenha.addEventListener("click", () => {
-  console.log("Toggle senha clicado");
-    if (inputSenha.type === "password") {
-        inputSenha.type = "text";
-        // Muda para o ícone de olho aberto (Solid)
-        toggleSenha.classList.remove("bx-lock");
-        toggleSenha.classList.add("bxs-lock-open-alt");
-    } else {
-        inputSenha.type = "password";
-        // Muda de volta para o olho cortado/fechado (Solid)
-        toggleSenha.classList.remove("bxs-lock-open-alt");
-        toggleSenha.classList.add("bx-lock");
-    }
+  if (inputSenha.type === "password") {
+    inputSenha.type = "text";
+    toggleSenha.classList.remove("bx-lock");
+    toggleSenha.classList.add("bxs-lock-open-alt");
+  } else {
+    inputSenha.type = "password";
+    toggleSenha.classList.remove("bxs-lock-open-alt");
+    toggleSenha.classList.add("bx-lock");
+  }
 });
