@@ -130,6 +130,8 @@ const produtos = [
     precoAtacado: null,
     estoqueVarejo: 8,
     estoqueAtacado: 0,
+    // Exemplo de produto SEM entrega (R2 item 7): só retirada na loja.
+    freteDisponivel: false,
     ativo: true,
     destaque: true
   }

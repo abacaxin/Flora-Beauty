@@ -22,6 +22,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin";
     }
 
+    function ehRevendedorAprovado() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get("statusRevendedor", "") == "aprovado" ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == "admin");
+    }
+
     // ── usuarios/{uid} ───────────────────────────────────────────────────
     // Cada pessoa só lê/edita o próprio perfil. Admin pode ler todos
     // (necessário para o painel administrativo), mas ninguém pode escrever
@@ -102,15 +109,53 @@ service cloud.firestore {
     }
 
     // ── pedidos/{pedidoId} ───────────────────────────────────────────────
-    // Pedido NUNCA nasce do cliente: só a Cloud Function "criarPedido"
-    // (Admin SDK, que ignora estas regras) pode criar, depois de recalcular
-    // preço, estoque, frete e permissão de atacado no servidor. Isso fecha
-    // a fraude de valor (ex.: pedido com total R$ 0,01 forjado no console).
-    // O cliente só LÊ os próprios pedidos; status é atualizado pelo admin.
+    // SEM Cloud Functions (plano Spark/custo zero), o pedido é criado pelo
+    // cliente — mas o documento NÃO PODE conter nenhum valor monetário:
+    // a allowlist de chaves abaixo rejeita qualquer campo de preço/total.
+    // Cada item guarda só {produtoId, quantidade, modo}; preço, desconto,
+    // frete e total são DERIVADOS da coleção "produtos" (que só o admin
+    // escreve) na hora de exibir (checkout, confirmação e painel admin).
+    // Risco residual documentado em docs/FALHAS_REMANESCENTES.md: o shape
+    // de cada elemento de "itens" não é validável em rules (sem loops);
+    // a conferência humana do PIX barra qualquer pedido adulterado.
     match /pedidos/{pedidoId} {
       allow read: if estaLogado() &&
         (resource.data.uidComprador == request.auth.uid || ehAdmin());
-      allow create: if false;
+      allow create: if estaLogado() &&
+        emailVerificado() &&
+        request.resource.data.keys().hasOnly(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
+        request.resource.data.keys().hasAll(['uidComprador', 'itens', 'temItemAtacado', 'modoEntrega', 'endereco', 'status', 'pagamento', 'criadoEm']) &&
+        request.resource.data.uidComprador == request.auth.uid &&
+        request.resource.data.itens is list &&
+        request.resource.data.itens.size() >= 1 &&
+        request.resource.data.itens.size() <= 30 &&
+        request.resource.data.temItemAtacado is bool &&
+        (request.resource.data.temItemAtacado == false || ehRevendedorAprovado()) &&
+        request.resource.data.modoEntrega in ['entrega', 'retirada'] &&
+        (
+          (request.resource.data.modoEntrega == 'retirada' &&
+            request.resource.data.endereco == null) ||
+          (request.resource.data.modoEntrega == 'entrega' &&
+            request.resource.data.endereco is map &&
+            request.resource.data.endereco.keys().hasOnly(['cep', 'endereco', 'bairro']) &&
+            request.resource.data.endereco.keys().hasAll(['cep', 'endereco', 'bairro']) &&
+            request.resource.data.endereco.cep is string &&
+            request.resource.data.endereco.cep.size() >= 8 &&
+            request.resource.data.endereco.cep.size() <= 12 &&
+            request.resource.data.endereco.endereco is string &&
+            request.resource.data.endereco.endereco.size() >= 1 &&
+            request.resource.data.endereco.endereco.size() <= 300 &&
+            request.resource.data.endereco.bairro is string &&
+            request.resource.data.endereco.bairro.size() >= 1 &&
+            request.resource.data.endereco.bairro.size() <= 120)
+        ) &&
+        request.resource.data.status == 'aguardando_pagamento' &&
+        request.resource.data.pagamento is map &&
+        request.resource.data.pagamento.keys().hasOnly(['metodo', 'status']) &&
+        request.resource.data.pagamento.keys().hasAll(['metodo', 'status']) &&
+        request.resource.data.pagamento.metodo == 'pix_whatsapp' &&
+        request.resource.data.pagamento.status == 'pendente' &&
+        request.resource.data.criadoEm == request.time;
       allow update, delete: if ehAdmin();
     }
 

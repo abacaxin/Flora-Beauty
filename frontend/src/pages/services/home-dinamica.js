@@ -4,7 +4,7 @@
 // Estação". Todo texto dinâmico passa por escapeHtml e toda imagem por
 // urlImagemSegura (C4).
 
-import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco } from "./produtos.js";
+import { listarDestaques, listarBannerHero, listarProdutosRecentes, infoPreco, disponivelNoModo } from "./produtos.js";
 import { listarCategorias } from "./categorias.js";
 import { observarAuth } from "./auth.js";
 import { adicionarAoCarrinho } from "./carrinho.js";
@@ -22,14 +22,18 @@ function formatarPreco(valor) {
   return (valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function precoHtml(p) {
-  const preco = infoPreco(p, "varejo");
-  if (!preco.temDesconto) {
-    return `<span class="product-price">${formatarPreco(preco.precoFinal)}</span>`;
+// Preço do card (mesmo formato do catálogo). Produtos sem preço de
+// varejo são vendidos só no atacado (R2 6.1).
+function precoCardHtml(p) {
+  if (!disponivelNoModo(p, "varejo")) {
+    return `<span class="catalogo-card-preco">Exclusivo atacado</span>`;
   }
+  const preco = infoPreco(p, "varejo");
   return `
-    <span class="product-price">${formatarPreco(preco.precoFinal)}</span>
-    <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
+    <span class="catalogo-card-preco">
+      ${formatarPreco(preco.precoFinal)}
+      ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
+    </span>
   `;
 }
 
@@ -138,22 +142,23 @@ async function carregarDestaques() {
       return;
     }
 
+    // Mesmo card do catálogo (R2 4.1/4.2): tamanho e imagem centralizada
+    // idênticos aos da página de produtos, + botão de adicionar.
     grid.innerHTML = produtos.map((p) => `
-      <div class="product-card reveal">
-        <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; color:inherit; display:block;">
-          <div class="product-featured">
-            <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}">
+      <div class="catalogo-card destaque-card reveal">
+        <a href="produto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; display:block;">
+          <div class="catalogo-card-img">
+            <img src="${urlImagemSegura(p.imagemURL)}" alt="${escapeHtml(p.nome)}" loading="lazy">
             ${infoPreco(p).temDesconto ? `<span class="desconto-selo">-${infoPreco(p).percentual}%</span>` : ""}
           </div>
-          <div class="product-info">
-            <div class="product-name">${escapeHtml(p.nome)}</div>
-            <div class="product-brand">${escapeHtml(p.categoria || "")}</div>
-            <div class="product-footer">
-              ${precoHtml(p)}
-            </div>
+          <div class="catalogo-card-info">
+            <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
+            ${precoCardHtml(p)}
           </div>
         </a>
-        <button class="product-add" data-id="${escapeHtml(p.id)}" title="Adicionar ao carrinho">+</button>
+        ${disponivelNoModo(p, "varejo") ? `
+          <button class="product-add" data-id="${escapeHtml(p.id)}" title="Adicionar ao carrinho">+</button>
+        ` : ""}
       </div>
     `).join("");
 
@@ -189,10 +194,7 @@ async function carregarProdutosHome() {
         </div>
         <div class="catalogo-card-info">
           <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
-          <span class="catalogo-card-preco">
-            ${formatarPreco(infoPreco(p).precoFinal)}
-            ${infoPreco(p).temDesconto ? `<span class="preco-antigo">${formatarPreco(infoPreco(p).precoOriginal)}</span>` : ""}
-          </span>
+          ${precoCardHtml(p)}
         </div>
       </a>
     `).join("");
@@ -277,9 +279,11 @@ function renderizarBanner() {
         </div>
       ` : ""}
       <div class="highlight-price">
-        <small>A partir de</small>
-        ${formatarPreco(preco.precoFinal)}
-        ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
+        ${disponivelNoModo(p, "varejo") ? `
+          <small>A partir de</small>
+          ${formatarPreco(preco.precoFinal)}
+          ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
+        ` : `<small>Exclusivo atacado</small>`}
       </div>
       <a href="produto.html?id=${encodeURIComponent(p.id)}" class="btn-primary">
         Quero este produto

@@ -18,9 +18,6 @@ import {
   connectAuthEmulator
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
-  getFunctions
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
-import {
   initializeAppCheck,
   ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check.js";
@@ -43,15 +40,15 @@ export const app = initializeApp(firebaseConfig);
 // Firebase só aceita requisições acompanhadas de um token do reCAPTCHA v3,
 // emitido apenas para o site real rodando no domínio registrado.
 //
+// O App Check é GRATUITO no plano Spark e não exige cartão.
 // PASSOS PARA ATIVAR (detalhes em docs/MANUAL_CONFIGURACAO.md):
 //   1. Console Firebase → App Check → registrar o app web com reCAPTCHA v3
 //      (o console gera a chave do site, ligada ao domínio).
 //   2. Colar a chave em RECAPTCHA_V3_SITE_KEY abaixo.
 //   3. No console, marcar "Aplicar" (Enforce) para Firestore e Authentication.
-//   4. Nas Cloud Functions, mudar EXIGIR_APP_CHECK para true e fazer deploy.
 //
 // Enquanto a chave for o placeholder, o App Check fica desligado para não
-// derrubar o site — mas o item C0 SÓ está completo depois dos passos acima.
+// derrubar o site — mas o item SÓ está completo depois dos passos acima.
 const RECAPTCHA_V3_SITE_KEY = "COLE_AQUI_A_CHAVE_RECAPTCHA_V3";
 
 // Para testar em localhost com App Check já ativado, descomente a linha
@@ -73,8 +70,6 @@ if (!RECAPTCHA_V3_SITE_KEY.startsWith("COLE_AQUI")) {
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-// Functions na mesma região das Cloud Functions (southamerica-east1).
-export const functions = getFunctions(app, "southamerica-east1");
 
 // Para testar localmente com os emuladores do Firebase, descomente:
 // connectFirestoreEmulator(db, "localhost", 8080);

@@ -127,6 +127,8 @@ function renderizarTabela() {
             <td>${escapeHtml(p.nome)}
               ${p.bannerHero ? '<span class="badge badge-aprovado" title="No banner Produto da Estação">BANNER</span>' : ""}
               ${p.descontoAtivo ? `<span class="badge badge-pendente" title="Produto em desconto">-${Number(p.descontoPercentual) || 0}%</span>` : ""}
+              ${p.freteDisponivel === false ? '<span class="badge badge-preparando" title="Sem entrega — cliente só pode retirar na loja">SÓ RETIRADA</span>' : ""}
+              ${!(Number(p.precoVarejo) > 0) ? '<span class="badge badge-enviado" title="Sem preço de varejo — vendido apenas no atacado">SÓ ATACADO</span>' : ""}
             </td>
             <td>${escapeHtml(p.sku || "—")}</td>
             <td>${escapeHtml(nomeCategoria(p.categoria))}</td>
@@ -222,7 +224,9 @@ function limparForm() {
   document.getElementById("p-banner-nome-secao").value = "Produto da estação";
   selectDescontoAtivo.value = "false";
   camposDesconto.style.display = "none";
+  document.getElementById("p-estoque-varejo").value = 0;
   document.getElementById("p-estoque-atacado").value = 0;
+  document.getElementById("p-frete-disponivel").value = "true";
   modalMsg.style.display = "none";
   resetarListaImagens();
 }
@@ -257,6 +261,7 @@ function abrirModalEdicao(id) {
   document.getElementById("p-estoque-atacado").value = estoquePorModo(p, "atacado");
   document.getElementById("p-ativo").value = String(p.ativo !== false);
   document.getElementById("p-destaque").value = String(p.destaque === true);
+  document.getElementById("p-frete-disponivel").value = String(p.freteDisponivel !== false);
 
   selectDescontoAtivo.value = String(p.descontoAtivo === true);
   camposDesconto.style.display = p.descontoAtivo === true ? "block" : "none";
@@ -336,10 +341,12 @@ form.addEventListener("submit", async (evento) => {
     estoqueAtacado: Number(document.getElementById("p-estoque-atacado").value) || 0,
     estoque: null,
     precoAtacado: Number(document.getElementById("p-preco-atacado").value) || null,
-    // Desconto opcional (A2) — o preço final é derivado no servidor.
+    // Desconto opcional (A2) — o preço final é derivado da coleção produtos.
     descontoAtivo,
     descontoTipo: descontoAtivo ? "percentual" : null,
     descontoPercentual: descontoAtivo ? descontoPercentual : null,
+    // Frete por produto (R2 item 7): false = só retirada na loja.
+    freteDisponivel: document.getElementById("p-frete-disponivel").value === "true",
     ativo: document.getElementById("p-ativo").value === "true",
     destaque: document.getElementById("p-destaque").value === "true",
     bannerHero,
@@ -370,6 +377,15 @@ form.addEventListener("submit", async (evento) => {
 
   if (descontoAtivo && (descontoPercentual < 1 || descontoPercentual > 90)) {
     modalMsg.textContent = "O desconto deve ser um percentual entre 1 e 90.";
+    modalMsg.classList.remove("sucesso");
+    modalMsg.style.display = "block";
+    return;
+  }
+
+  // Varejo é opcional (R2 6.1), mas o produto precisa existir em PELO
+  // MENOS uma modalidade — senão não aparece em lugar nenhum da loja.
+  if ((dados.precoVarejo || 0) <= 0 && (dados.precoAtacado || 0) <= 0) {
+    modalMsg.textContent = "Configure pelo menos uma modalidade: preço de varejo e/ou preço de atacado.";
     modalMsg.classList.remove("sucesso");
     modalMsg.style.display = "block";
     return;

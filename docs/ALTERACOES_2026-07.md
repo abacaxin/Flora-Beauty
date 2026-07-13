@@ -1,5 +1,10 @@
 # Alterações — Revisão de 07/2026
 
+> ⚠️ **ATUALIZADO PELA RODADA 2** ([ALTERACOES_2026-07_R2.md](ALTERACOES_2026-07_R2.md)): as
+> **Cloud Functions descritas no item C1 foram REMOVIDAS** — o plano Blaze ficou fora do
+> orçamento e o sistema foi re-arquitetado para rodar 100% no plano gratuito (Spark), com o
+> pedido criado no cliente sem nenhum campo monetário. Leia a R2 antes deste documento.
+
 O que foi alterado, **por que**, **onde** (arquivos) e quais ajustes acompanham. Organizado pelos itens do plano (C = segurança, A = funcionalidades, B = visual, D = housekeeping).
 
 > Pós-requisitos manuais estão em [MANUAL_CONFIGURACAO.md](MANUAL_CONFIGURACAO.md) (deploy de rules/functions, App Check) e [MANUAL_PAGAMENTO.md](MANUAL_PAGAMENTO.md).

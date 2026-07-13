@@ -2,6 +2,7 @@ import { protegerPaginaAdmin } from "./admin-auth.js";
 import { escapeHtml } from "../../services/seguranca.js";
 import { buscarMetricas } from "../../services/metricas.js";
 import { listarProdutos } from "../../services/produtos.js";
+import { derivarTotaisDePedidos } from "../../services/pedidos.js";
 import { db } from "../../services/firebase-config.js";
 import {
   collection,
@@ -50,8 +51,13 @@ async function carregarDashboard() {
   ]);
 
   // ── Cards de métricas gerais ────────────────────────────────────────────
+  // Pedidos não guardam valores (arquitetura Spark): o faturamento é
+  // derivado dos preços atuais da coleção "produtos".
+  const totaisPedidos = await derivarTotaisDePedidos(pedidos);
   const pedidosPagos = pedidos.filter((p) => p.status !== "cancelado" && p.status !== "aguardando_pagamento");
-  const faturamento = pedidosPagos.reduce((soma, p) => soma + (p.total || 0), 0);
+  const faturamento = pedidosPagos.reduce(
+    (soma, p) => soma + (totaisPedidos.get(p.id)?.total || 0), 0
+  );
   const totalVisitas = metricas.filter((m) => m.tipo === "pagina").length;
   const totalVisualizacoesProduto = metricas.filter((m) => m.tipo === "produto").length;
 
@@ -135,7 +141,7 @@ async function carregarDashboard() {
             <tr>
               <td>${escapeHtml(p.id.slice(0, 8))}...</td>
               <td>${formatarData(p.criadoEm)}</td>
-              <td>${formatarPreco(p.total)}</td>
+              <td>${formatarPreco(totaisPedidos.get(p.id)?.total ?? 0)}</td>
               <td><span class="badge badge-${escapeHtml(p.status || "")}">${escapeHtml((p.status || "").replace(/_/g, " "))}</span></td>
             </tr>
           `).join("")}

@@ -1,4 +1,4 @@
-import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo } from "../services/produtos.js";
+import { buscarProdutoPorId, infoPreco, estoquePorModo, disponivelNoModo, podeSerEntregue } from "../services/produtos.js";
 import { listarCategorias } from "../services/categorias.js";
 import { observarAuth } from "../services/auth.js";
 import { adicionarAoCarrinho } from "../services/carrinho.js";
@@ -64,11 +64,14 @@ async function carregarProduto() {
 
   registrarVisita(`produto:${p.id}`, "produto");
 
-  // Estoque de varejo e atacado são independentes (A4): esta página vende
-  // no varejo; o atacado tem página e estoque próprios.
+  // Estoque de varejo e atacado são independentes (A4). O varejo é
+  // OPCIONAL (R2 6.1): um produto pode existir só no atacado — nesse
+  // caso, esta página não mostra preço/quantidade de varejo.
+  const temVarejo = disponivelNoModo(p, "varejo");
   const estoqueVarejo = estoquePorModo(p, "varejo");
-  const disponivel = estoqueVarejo > 0;
+  const disponivel = temVarejo && estoqueVarejo > 0;
   const preco = infoPreco(p, "varejo");
+  const somenteRetirada = !podeSerEntregue(p);
   const todasImagens = [p.imagemURL, ...(p.imagensExtras || [])].filter(Boolean);
   if (todasImagens.length === 0) todasImagens.push("images/logo.ico");
 
@@ -100,23 +103,34 @@ async function carregarProduto() {
         <h1>${escapeHtml(p.nome)}</h1>
         <p class="produto-sku">SKU: ${escapeHtml(p.sku || "—")}</p>
 
-        <div class="produto-preco">
-          ${formatarPreco(preco.precoFinal)}
-          ${preco.temDesconto ? `
-            <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
-            <span class="desconto-badge">-${preco.percentual}%</span>
-          ` : ""}
-        </div>
+        ${temVarejo ? `
+          <div class="produto-preco">
+            ${formatarPreco(preco.precoFinal)}
+            ${preco.temDesconto ? `
+              <span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>
+              <span class="desconto-badge">-${preco.percentual}%</span>
+            ` : ""}
+          </div>
+        ` : ""}
         ${disponivelNoModo(p, "atacado") ? `
           <p class="produto-preco-atacado">
-            No atacado: ${formatarPreco(infoPreco(p, "atacado").precoFinal)}/un. para revendedores.
+            ${temVarejo ? "No atacado" : "Produto exclusivo do atacado"}:
+            ${formatarPreco(infoPreco(p, "atacado").precoFinal)}/un. para revendedores.
             <a href="atacado.html">Ver modo atacado</a>
           </p>
         ` : ""}
+        ${somenteRetirada ? `
+          <p class="produto-preco-atacado">
+            🏬 Este produto não tem entrega — disponível apenas para retirada na loja
+            (Monumental Shopping, 2º piso).
+          </p>
+        ` : ""}
 
-        <p class="produto-estoque ${disponivel ? "disponivel" : "indisponivel"}">
-          ${disponivel ? `Em estoque (${estoqueVarejo} unidades)` : "Produto fora de estoque"}
-        </p>
+        ${temVarejo ? `
+          <p class="produto-estoque ${disponivel ? "disponivel" : "indisponivel"}">
+            ${disponivel ? `Em estoque (${estoqueVarejo} unidades)` : "Produto fora de estoque"}
+          </p>
+        ` : ""}
 
         ${disponivel ? `
           <div class="produto-qtd-wrap">

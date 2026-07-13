@@ -1,48 +1,57 @@
-# Estado Atual e Falhas Remanescentes — pós-revisão 07/2026
+# Estado Atual e Falhas Remanescentes — pós-rodada 2 (07/2026)
 
-Registro honesto do que **ainda não está resolvido** depois das mudanças. Nenhum sistema é "100% seguro" — esta lista é o que sabemos que falta, em ordem de prioridade.
+Registro honesto do que **ainda não está resolvido**. A rodada 2 re-arquitetou o sistema para o plano **Spark (custo zero, SEM Cloud Functions)** — isso muda o mapa de riscos: alguns foram fechados por regra de banco, outros passaram a depender de **conferência humana**, e está tudo explícito abaixo.
 
 ---
 
-## 1. Pendências que DEPENDEM DE AÇÃO MANUAL (bloqueiam a proteção nova)
+## 1. ⚠ RISCO RESIDUAL PRINCIPAL — integridade de preço sem servidor
 
-Estas proteções estão **implementadas no código, mas desligadas** até os passos do [MANUAL_CONFIGURACAO.md](MANUAL_CONFIGURACAO.md):
+**Contexto:** sem Cloud Functions (Blaze fora do orçamento), o pedido é criado pelo próprio cliente. As mitigações em camadas:
+
+1. **O documento do pedido NÃO aceita nenhum campo monetário.** As `firestore.rules` usam allowlist de chaves — um pedido com `total`, `precoUnitario` ou qualquer campo de valor é **rejeitado pelo banco**. Não existe "gravar total de R$ 0,01": o total simplesmente não existe no documento.
+2. **Todo valor exibido é DERIVADO da coleção `produtos`** (que só o admin escreve): confirmação de pedido, painel admin e dashboard recalculam preço/desconto/frete/total na hora, dos preços atuais.
+3. **O que sobra nas mãos do cliente:** as **quantidades** e o **modo** de cada item (as rules não conseguem inspecionar elemento por elemento de uma lista — sem loops). Um cliente malicioso pode, via console, gravar quantidades absurdas ou marcar `modo: "atacado"` num item.
+4. **Trava final — conferência humana do PIX:** o pagamento é manual. A loja compara o comprovante com o **total derivado exibido no painel** (que usa os preços dela, não os do cliente). O painel ainda marca com ⚠ pedidos com item de atacado marcado como varejo (adulteração detectável). **Um pedido forjado nunca vira prejuízo: vira um PIX que não bate e um pedido recusado.**
+
+**Consequência prática do trade-off de derivação:** se o admin mudar um preço DEPOIS de um pedido criado e ANTES da conferência, o total exibido acompanha o preço novo (não há histórico de preço sem servidor). Para o fluxo manual da loja isso é aceitável — o valor certo é o do momento da conferência — mas está registrado como limitação.
+
+## 2. Pendências que dependem de ação manual (bloqueiam a proteção nova)
 
 | # | Pendência | Risco enquanto não for feita |
 |---|-----------|------------------------------|
-| P1 | **Deploy das novas `firestore.rules`** | As regras antigas continuam valendo no servidor: `metricas` aberta, pedido forjável, perfil sem exigir e-mail verificado. **O código novo do site já supõe as regras novas.** |
-| P2 | **Deploy da Cloud Function `criarPedido`** (exige plano Blaze) | Sem a função no ar + rules novas aplicadas, o checkout fica **quebrado** (o front chama a função). Fazer P1+P2 juntos. |
-| P3 | **App Check (chave reCAPTCHA + enforce no console + `EXIGIR_APP_CHECK = true`)** | Bots ainda conseguem chamar Auth/Firestore direto. O C2 (perfil só com e-mail verificado) reduz o estrago no banco, mas a criação de contas Auth e o spam de e-mails de verificação continuam possíveis até o App Check ser aplicado. |
-| P4 | **Estoque de atacado dos produtos antigos** | Produtos cadastrados antes aparecem como "sem estoque de atacado" até o admin preencher o campo novo. |
+| P1 | **Deploy das `firestore.rules` + hosting juntos** | As regras antigas continuam valendo no servidor. O site novo já supõe as regras novas (pedido sem valores). |
+| P2 | **App Check (chave reCAPTCHA + enforce)** — gratuito no Spark | Bots ainda conseguem chamar Auth/Firestore direto. |
+| P3 | **Chave PIX em `configuracoes/pagamento`** | Sem ela, a confirmação de pedido só mostra o botão de WhatsApp. |
+| P4 | **Estoque de atacado dos produtos antigos** | Produtos pré-rodada-1 aparecem "sem estoque de atacado" até preencher o campo no painel. |
 
-## 2. Falhas de segurança conhecidas que PERMANECEM (por decisão de escopo)
+## 3. Falhas conhecidas que PERMANECEM (por decisão de escopo/custo)
 
-| # | Falha | Por que ficou | Mitigação atual / caminho |
-|---|-------|---------------|---------------------------|
-| R1 | **Rate limiting fino inexistente.** App Check dificulta bots, mas não impede um humano (ou farm de humanos) de criar contas/pedidos em volume. | Firebase não tem rate limit nativo por usuário; exigiria contadores em Firestore ou Cloud Armor. | Alertas de billing + monitorar console. Roadmap: contador de pedidos/hora por uid na própria function. |
-| R2 | **E-mail "existente" não é verificável em tempo real.** Validamos formato + exigimos clique no link; um e-mail real de terceiro ainda recebe 1 mensagem indesejada. | Verificação SMTP em tempo real é não-confiável e cara; é o mesmo trade-off de qualquer loja. | App Check + limite natural do Firebase de reenvio. |
-| R3 | **Admin é um único ponto de falha.** Uma conta admin comprometida edita produtos/preços/pedidos. | Escopo — exigiria 2FA obrigatório e trilha de auditoria. | C4 (escape) já impede que o admin comprometido plante XSS. Roadmap: exigir MFA na conta admin (console Firebase suporta). |
-| R4 | **Sem verificação server-side de que `imagemURL` aponta para imagem de fato.** Validamos só `https://`. | Proxy/validação de conteúdo é infra extra. | Baixo risco: só admin escreve. |
-| R5 | **Webhook/estorno de pagamento não existem ainda** — o fluxo é manual (status trocado pelo admin). | Miguel vai configurar o gateway na conta dele (ver MANUAL_PAGAMENTO.md). | Estoque é reservado na criação do pedido; cancelamento manual exige devolver estoque manualmente por enquanto. |
-| R6 | **Pedido cancelado não devolve estoque automaticamente.** | Regra de negócio a definir (quando cancelar devolve? sempre?). | Admin ajusta o estoque no painel ao cancelar. Roadmap: function `onUpdate` de pedidos. |
+| # | Falha | Por que ficou | Mitigação atual |
+|---|-------|---------------|-----------------|
+| R1 | **Estoque não baixa automaticamente no pedido.** Client-side isso exigiria permitir escrita pública em `produtos` (griefing pior que o problema). | Sem backend no Spark. | Checkout avisa quando a quantidade passa do estoque; admin ajusta estoque ao confirmar o pagamento (rotina no MANUAL_CONFIGURACAO §4). Overselling é barrado na conferência humana. |
+| R2 | **Quantidades/itens do pedido não são revalidados fora das rules** (tamanho da lista 1..30 é o máximo validável). | Rules não iteram listas. | Derivação clampa quantidades (1..500) na exibição + conferência humana (seção 1). |
+| R3 | **Rate limiting fino inexistente.** | Sem backend; App Check é a barreira anti-bot disponível. | Alertas de uso no console; monitorar. |
+| R4 | **E-mail "existente" não é verificável em tempo real.** | Trade-off padrão; verificação é o link. | Conta só ativa (e só entra no banco) após o clique no link. |
+| R5 | **Admin é ponto único de falha.** | Escopo. | Escape (C4) impede XSS armazenado; MFA do admin no roadmap. |
+| R6 | **Confirmação de pagamento manual** (sem webhook). | Custo zero — gateway automático exigiria backend. | Fluxo PIX+WhatsApp documentado; volume da loja comporta. |
 
-## 3. Dívidas técnicas (não são falhas de segurança)
+## 4. Dívidas técnicas (não são falhas de segurança)
 
 | # | Dívida | Impacto |
 |---|--------|---------|
-| D1 | `buscarMetricas` ainda agrega no cliente (1 doc por visita, janela de 30 dias). | Dashboard fica lento/caro com tráfego alto. Roadmap: agregação diária via function agendada. |
-| D2 | Busca textual é client-side (com filtro ativo, a categoria inteira é baixada). | OK para catálogo pequeno/médio; com milhares de produtos, migrar para Algolia/Typesense ou a busca da Nuvemshop. |
-| D3 | Carrinho guarda `precoUnitario` de exibição que pode ficar defasado até o checkout. | Sem risco (servidor recalcula e mostra o total confirmado), mas o cliente pode ver diferença entre carrinho e confirmação se o admin mudar um preço no meio — comportamento documentado na tela ("valores são estimativa"). |
-| D4 | Duplicação consciente do cálculo de frete (front `services/frete.js` + servidor `functions/frete.js`). | Alterar zonas/preços exige editar os dois arquivos (avisado em comentário em ambos). |
-| D5 | `firestore.indexes.json` pode precisar de índices novos se o catálogo crescer com muitas categorias (a query paginada usa `ativo == true` + `categoria ==` + `orderBy criadoEm`). O Firestore avisa com um link de criação quando faltar. | Erro visível no console do navegador com link de um clique. |
-| D6 | Testes automatizados não existem (nunca existiram no projeto). | Regressões dependem de teste manual. Roadmap: testes das rules com o emulador. |
+| D1 | `buscarMetricas` agrega no cliente (1 doc/visita, 30 dias). | Dashboard lento/caro com tráfego alto; pré-agregação exigiria backend. |
+| D2 | Busca textual client-side (com filtro ativo baixa a categoria inteira). | OK para catálogo pequeno/médio. |
+| D3 | Derivar totais no painel lê cada produto único dos pedidos (leituras Firestore). | Batched por produto único; ok no free tier (50k leituras/dia). |
+| D4 | Frete duplicado? **Não mais** — na rodada 2 o cálculo voltou a existir SÓ em `services/frete.js` (client-side). | — |
+| D5 | Testes automatizados não existem. | Testar as rules no emulador está no roadmap. |
 
-## 4. Como validar o estado atual (roteiro de teste manual)
+## 5. Roteiro de teste manual (validar o estado atual)
 
-1. `firebase emulators:start` (ou ambiente de testes) com rules + functions deployadas.
-2. **Fraude de preço:** via console do navegador, tentar `addDoc` em `pedidos` → deve falhar (`permission-denied`). Tentar checkout normal → deve criar pedido com total do servidor.
-3. **Metricas:** tentar `addDoc` em `metricas` com campo extra ou string de 500 chars → deve falhar.
-4. **Cadastro:** criar conta com e-mail inventado → não recebe link, não loga, e `usuarios/{uid}` não existe no Firestore.
-5. **Atacado:** visitante vê catálogo e não compra; cliente sem CNPJ recebe aviso; revendedor aprovado compra com ≥6 unidades (menos que isso a function recusa).
-6. **Tema:** alternar em admin/atacado/produtos e recarregar (persiste via localStorage).
-7. **XSS:** criar produto com nome `<img src=x onerror=alert(1)>` → deve aparecer como texto literal em todas as telas (home, catálogo, detalhe, admin).
+1. **Preço não gravável:** via console do navegador, tentar `addDoc` em `pedidos` com campo `total` → deve falhar (`permission-denied`, allowlist).
+2. **Pedido legítimo:** checkout normal → pedido criado; confirmação mostra total derivado; painel admin mostra o MESMO total.
+3. **Adulteração detectável:** criar pedido com `modo: "atacado"` e `temItemAtacado: false` via console (conta cliente) → painel exibe ⚠ no pedido.
+4. **Atacado sem aprovação:** pedido com `temItemAtacado: true` numa conta não aprovada → rejeitado pelas rules.
+5. **Metricas:** `addDoc` com campo extra → rejeitado.
+6. **Cadastro:** e-mail inventado → nunca ativa, `usuarios/{uid}` não existe.
+7. **Frete por produto:** carrinho com item "só retirada" → opção Entrega desabilitada com aviso.
+8. **XSS:** produto com nome `<img src=x onerror=alert(1)>` → aparece como texto literal em todas as telas.

@@ -19,6 +19,7 @@
 //   descontoAtivo: boolean,       // desconto opcional configurado pelo admin (A2)
 //   descontoTipo: "percentual",   // por ora só percentual (campo previsto p/ futuros tipos)
 //   descontoPercentual: number,   // 1..90 — aplicado sobre precoVarejo
+//   freteDisponivel: boolean,     // false = só retirada na loja (sem entrega) — R2.7
 //   ativo: boolean,               // false = produto oculto do catálogo
 //   destaque: boolean,            // aparece na seção "Os mais amados" da home
 //   bannerHero: boolean,          // aparece no carrossel "Produto da Estação"
@@ -95,13 +96,23 @@ export function estoquePorModo(produto, modo = "varejo") {
 }
 
 /**
- * O produto existe na modalidade? (atacado exige preço configurado)
+ * O produto existe na modalidade? (cada modo exige o próprio preço
+ * configurado — um produto pode existir SÓ no atacado, R2 item 6.1)
  */
 export function disponivelNoModo(produto, modo = "varejo") {
   if (modo === "atacado") {
     return (Number(produto.precoAtacado) || 0) > 0;
   }
   return (Number(produto.precoVarejo) || 0) > 0;
+}
+
+/**
+ * O produto pode ser pedido para ENTREGA? (R2 item 7 — produtos com
+ * freteDisponivel === false só podem ser retirados na loja).
+ * Produtos antigos, sem o campo, continuam entregáveis.
+ */
+export function podeSerEntregue(produto) {
+  return produto.freteDisponivel !== false;
 }
 
 // ── Listagens ─────────────────────────────────────────────────────────────

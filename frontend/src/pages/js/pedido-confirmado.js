@@ -7,7 +7,7 @@
 //   { pixChave: "...", pixNome: "...", instrucoes: "..." }
 
 import { exigirLogin } from "../services/auth.js";
-import { buscarPedidoPorId } from "../services/pedidos.js";
+import { buscarPedidoPorId, derivarTotaisDoPedido } from "../services/pedidos.js";
 import { escapeHtml } from "../services/seguranca.js";
 import { db } from "../services/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -31,9 +31,9 @@ async function buscarConfigPagamento() {
   }
 }
 
-function blocoPagamento(pedido, config) {
+function blocoPagamento(pedido, config, total) {
   const linkWhatsApp = `https://wa.me/${WHATSAPP_LOJA}?text=${encodeURIComponent(
-    `Olá! Acabei de fazer o pedido ${pedido.id} no valor de ${formatarPreco(pedido.total)} e quero combinar o pagamento.`
+    `Olá! Acabei de fazer o pedido ${pedido.id} no valor de ${formatarPreco(total)} e quero combinar o pagamento.`
   )}`;
 
   const temPix = Boolean(config?.pixChave);
@@ -47,7 +47,7 @@ function blocoPagamento(pedido, config) {
           <button type="button" class="btn-outline btn-copiar-pix" id="btn-copiar-pix">Copiar chave</button>
         </p>
         ${config.pixNome ? `<p class="pagamento-linha">Favorecido: ${escapeHtml(config.pixNome)}</p>` : ""}
-        <p class="pagamento-linha">Valor: <strong>${formatarPreco(pedido.total)}</strong></p>
+        <p class="pagamento-linha">Valor: <strong>${formatarPreco(total)}</strong></p>
         <p class="pagamento-linha">Depois de pagar, envie o comprovante pelo WhatsApp para agilizar a confirmação.</p>
       ` : `
         <p class="pagamento-linha">
@@ -81,7 +81,12 @@ exigirLogin(async ({ usuario }) => {
     return;
   }
 
-  const config = await buscarConfigPagamento();
+  // O pedido não guarda valores (arquitetura Spark) — o total é derivado
+  // dos preços atuais da coleção "produtos" + frete do bairro salvo.
+  const [config, totais] = await Promise.all([
+    buscarConfigPagamento(),
+    derivarTotaisDoPedido(pedido)
+  ]);
 
   conteudo.innerHTML = `
     <div style="max-width: 520px; margin: 0 auto; padding: 2rem 0;">
@@ -91,9 +96,10 @@ exigirLogin(async ({ usuario }) => {
       </h1>
       <p style="font-family:'Jost', sans-serif; color: var(--text-muted); margin-bottom: 1.5rem;">
         Número do pedido: <strong>${escapeHtml(pedido.id)}</strong><br>
-        Total confirmado: <strong style="color: var(--gold);">${formatarPreco(pedido.total)}</strong>
+        ${totais.frete ? `Frete (${escapeHtml(totais.frete.zona?.nome || "a confirmar")}): <strong>${formatarPreco(totais.frete.valor)}</strong><br>` : ""}
+        Total: <strong style="color: var(--gold);">${formatarPreco(totais.total)}</strong>
       </p>
-      ${blocoPagamento(pedido, config)}
+      ${blocoPagamento(pedido, config, totais.total)}
       <p style="font-family:'Jost', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin: 1.5rem 0 2rem;">
         ${pedido.modoEntrega === "retirada"
           ? "Retire seu pedido no Monumental Shopping, 2º piso, assim que recebermos a confirmação do pagamento."

@@ -1,3 +1,10 @@
+// ── Carrinho + checkout — Flora Beauty ─────────────────────────────────────
+// ARQUITETURA CUSTO ZERO (Spark): os preços exibidos aqui são SEMPRE
+// derivados da coleção "produtos" (recarregada ao abrir a página), nunca
+// do que está gravado no carrinho. O pedido criado não carrega valores —
+// só {produtoId, quantidade, modo} — e o total oficial é conferido pela
+// loja na hora do PIX (ver services/pedidos.js).
+
 import { exigirLogin } from "../services/auth.js";
 import { db } from "../services/firebase-config.js";
 import {
@@ -8,10 +15,16 @@ import {
   obterCarrinho,
   atualizarQuantidade,
   removerDoCarrinho,
-  calcularTotal
+  esvaziarCarrinho
 } from "../services/carrinho.js";
 import { calcularFrete, TAXA_RETIRADA_LOJA } from "../services/frete.js";
-import { criarPedido, traduzErroPedido } from "../services/pedidos.js";
+import { criarPedido } from "../services/pedidos.js";
+import {
+  buscarProdutoPorId,
+  infoPreco,
+  estoquePorModo,
+  podeSerEntregue
+} from "../services/produtos.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
 import {
   obterMinimoAtacadoCarrinho,
@@ -22,16 +35,51 @@ const conteudo = document.getElementById("carrinho-conteudo");
 
 let usuarioAtual = null;
 let itensAtuais = [];
+let produtosCache = new Map(); // produtoId -> produto (dados FRESCOS do catálogo)
 let modoEntrega = "entrega"; // "entrega" | "retirada"
 let freteAtual = { valor: 0, zona: null, encontrado: true };
-let minimoAtacado = null; // carregado de configuracoes/atacado
+let minimoAtacado = null;
 
 function formatarPreco(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Preço unitário REAL do item, derivado do catálogo atual (não do carrinho).
+function precoUnitarioReal(item) {
+  const produto = produtosCache.get(item.produtoId);
+  if (!produto) return 0;
+  return infoPreco(produto, item.modo).precoFinal;
+}
+
+function subtotalReal(itens) {
+  return itens.reduce(
+    (soma, item) => soma + Math.round(precoUnitarioReal(item) * 100) * item.quantidade,
+    0
+  ) / 100;
+}
+
 function pesoTotalCarrinho(itens) {
-  return itens.reduce((soma, item) => soma + (item.pesoUnitario || 0) * item.quantidade, 0);
+  return itens.reduce((soma, item) => {
+    const produto = produtosCache.get(item.produtoId);
+    return soma + (Number(produto?.peso) || 0) * item.quantidade;
+  }, 0);
+}
+
+// Itens que NÃO podem ser entregues (freteDisponivel === false no produto).
+function itensSomenteRetirada() {
+  return itensAtuais.filter((item) => {
+    const produto = produtosCache.get(item.produtoId);
+    return produto && !podeSerEntregue(produto);
+  });
+}
+
+async function carregarProdutosDoCarrinho() {
+  const ids = [...new Set(itensAtuais.map((i) => i.produtoId))];
+  const produtos = await Promise.all(ids.map((id) => buscarProdutoPorId(id)));
+  produtosCache = new Map();
+  produtos.forEach((p, i) => {
+    if (p) produtosCache.set(ids[i], p);
+  });
 }
 
 // ── Renderização ──────────────────────────────────────────────────────────
@@ -46,7 +94,13 @@ function renderizarCarrinho() {
     return;
   }
 
-  const subtotal = calcularTotal(itensAtuais);
+  const subtotal = subtotalReal(itensAtuais);
+  const somenteRetirada = itensSomenteRetirada();
+
+  // Se algum item é só-retirada, a entrega fica indisponível (R2 item 7).
+  if (somenteRetirada.length > 0) {
+    modoEntrega = "retirada";
+  }
 
   conteudo.innerHTML = `
     <div class="carrinho-layout">
@@ -56,13 +110,21 @@ function renderizarCarrinho() {
         <h2>Entrega</h2>
 
         <div class="modo-entrega-opcoes">
-          <button class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega">
+          <button class="modo-entrega-btn ${modoEntrega === "entrega" ? "active" : ""}" data-modo="entrega" ${somenteRetirada.length > 0 ? "disabled" : ""}>
             🚚 Entrega
           </button>
           <button class="modo-entrega-btn ${modoEntrega === "retirada" ? "active" : ""}" data-modo="retirada">
             🏬 Retirar na loja
           </button>
         </div>
+        ${somenteRetirada.length > 0 ? `
+          <p class="checkout-msg" style="display:block;">
+            ${somenteRetirada.length === 1
+              ? `O item "${escapeHtml(somenteRetirada[0].nome)}" só está disponível para retirada na loja.`
+              : `${somenteRetirada.length} itens do carrinho só estão disponíveis para retirada na loja.`}
+            Para receber os demais em casa, faça um pedido separado.
+          </p>
+        ` : ""}
 
         <div id="campos-entrega"></div>
 
@@ -80,8 +142,8 @@ function renderizarCarrinho() {
           <span id="valor-total">${formatarPreco(subtotal)}</span>
         </div>
         <p class="frete-zona-info" style="margin-top:0.6rem;">
-          Os valores acima são uma estimativa — o total oficial é conferido
-          e recalculado com os preços atuais ao finalizar a compra.
+          Valores calculados com os preços atuais do catálogo. O total é
+          confirmado pela loja no pagamento via PIX/WhatsApp.
         </p>
         <p class="checkout-msg" id="aviso-atacado" style="display:none;"></p>
 
@@ -98,6 +160,7 @@ function renderizarCarrinho() {
 
   document.querySelectorAll(".modo-entrega-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (btn.disabled) return;
       modoEntrega = btn.dataset.modo;
       document.querySelectorAll(".modo-entrega-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
@@ -107,9 +170,8 @@ function renderizarCarrinho() {
   });
 }
 
-// Mínimo de atacado por CARRINHO (A3): a soma das unidades em modo
-// atacado precisa atingir o mínimo configurado — aviso na interface;
-// a validação que vale é a do servidor.
+// Mínimo de atacado por CARRINHO (A3) — aviso na interface; a conferência
+// final é humana (PIX), e as rules garantem quem PODE comprar atacado.
 async function atualizarAvisoAtacado() {
   const aviso = document.getElementById("aviso-atacado");
   if (!aviso) return;
@@ -137,14 +199,25 @@ async function atualizarAvisoAtacado() {
 
 function renderizarItens() {
   const lista = document.getElementById("lista-itens");
-  lista.innerHTML = itensAtuais.map((item) => `
+  lista.innerHTML = itensAtuais.map((item) => {
+    const produto = produtosCache.get(item.produtoId);
+    const precoReal = precoUnitarioReal(item);
+    const estoque = produto ? estoquePorModo(produto, item.modo) : 0;
+    const soRetirada = produto && !podeSerEntregue(produto);
+
+    return `
     <div class="carrinho-item" data-produto-id="${escapeHtml(item.produtoId)}" data-modo="${escapeHtml(item.modo)}">
       <div class="carrinho-item-img">
         <img src="${urlImagemSegura(item.imagemURL)}" alt="${escapeHtml(item.nome)}">
       </div>
       <div class="carrinho-item-info">
-        <h3>${escapeHtml(item.nome)} ${item.modo === "atacado" ? '<span class="tag-atacado">ATACADO</span>' : ""}</h3>
-        <span class="preco-unit">${formatarPreco(item.precoUnitario)} / un.</span>
+        <h3>${escapeHtml(item.nome)}
+          ${item.modo === "atacado" ? '<span class="tag-atacado">ATACADO</span>' : ""}
+          ${soRetirada ? '<span class="tag-atacado" title="Este produto não tem entrega">SÓ RETIRADA</span>' : ""}
+        </h3>
+        <span class="preco-unit">${formatarPreco(precoReal)} / un.</span>
+        ${!produto ? `<span class="preco-unit" style="color:#b02a2a;">Produto indisponível — remova do carrinho</span>` : ""}
+        ${produto && item.quantidade > estoque ? `<span class="preco-unit" style="color:#b02a2a;">Só restam ${estoque} em estoque</span>` : ""}
         <div class="carrinho-item-qtd">
           <button type="button" class="btn-qtd-menos">−</button>
           <span class="qtd-valor">${Number(item.quantidade) || 0}</span>
@@ -152,11 +225,12 @@ function renderizarItens() {
         </div>
       </div>
       <div class="carrinho-item-totais">
-        <div class="preco-total">${formatarPreco(item.precoUnitario * item.quantidade)}</div>
+        <div class="preco-total">${formatarPreco(precoReal * item.quantidade)}</div>
         <button class="carrinho-item-remover">Remover</button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   lista.querySelectorAll(".carrinho-item").forEach((el) => {
     const produtoId = el.dataset.produtoId;
@@ -270,7 +344,7 @@ async function carregarEnderecoSalvo() {
 }
 
 function atualizarResumoFrete() {
-  const subtotal = calcularTotal(itensAtuais);
+  const subtotal = subtotalReal(itensAtuais);
   const valorFreteEl = document.getElementById("valor-frete");
   const valorTotalEl = document.getElementById("valor-total");
   const zonaInfoEl = document.getElementById("frete-zona-info");
@@ -308,15 +382,54 @@ function atualizarResumoFrete() {
   }
 }
 
+// ── Validações de UX antes de criar o pedido ─────────────────────────────
+// (as garantias de permissão/shape são das firestore.rules; aqui é para o
+// cliente não criar um pedido que a loja teria que recusar depois)
+async function validarAntesDeFinalizar(msg) {
+  // Produtos removidos do catálogo
+  const removidos = itensAtuais.filter((i) => !produtosCache.get(i.produtoId));
+  if (removidos.length > 0) {
+    msg.textContent = "Há itens indisponíveis no carrinho — remova-os para continuar.";
+    return false;
+  }
+
+  // Estoque atual (informativo — a loja confirma na conferência)
+  const semEstoque = itensAtuais.filter((i) => {
+    const produto = produtosCache.get(i.produtoId);
+    return i.quantidade > estoquePorModo(produto, i.modo);
+  });
+  if (semEstoque.length > 0) {
+    msg.textContent = `Estoque insuficiente de "${semEstoque[0].nome}" — ajuste a quantidade.`;
+    return false;
+  }
+
+  // Entrega com item só-retirada (R2 item 7)
+  if (modoEntrega === "entrega" && itensSomenteRetirada().length > 0) {
+    msg.textContent = "Um dos itens do carrinho só está disponível para retirada na loja.";
+    return false;
+  }
+
+  // Mínimo de atacado por carrinho (A3)
+  const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
+  if (unidadesAtacado > 0) {
+    if (minimoAtacado === null) minimoAtacado = await obterMinimoAtacadoCarrinho();
+    if (unidadesAtacado < minimoAtacado) {
+      msg.textContent = `O pedido de atacado exige no mínimo ${minimoAtacado} unidades no carrinho (você tem ${unidadesAtacado}). Adicione mais itens ou mude-os para o varejo.`;
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // ── Finalizar compra ────────────────────────────────────────────────────
-// O pedido é criado pela Cloud Function: enviamos só os identificadores e
-// quantidades, e o servidor recalcula preço, estoque, frete e total.
 function configurarBotaoFinalizar() {
   const btn = document.getElementById("btn-finalizar");
   const msg = document.getElementById("checkout-msg");
 
   btn.addEventListener("click", async () => {
     msg.style.display = "none";
+    msg.classList.remove("sucesso");
 
     let endereco = null;
     if (modoEntrega === "entrega") {
@@ -324,9 +437,8 @@ function configurarBotaoFinalizar() {
       const enderecoTexto = document.getElementById("checkout-endereco")?.value.trim();
       const bairro = document.getElementById("checkout-bairro")?.value.trim();
 
-      if (!cep || !enderecoTexto || !bairro) {
-        msg.textContent = "Preencha CEP, endereço e bairro para continuar.";
-        msg.classList.remove("sucesso");
+      if (!cep || cep.replace(/\D/g, "").length !== 8 || !enderecoTexto || !bairro) {
+        msg.textContent = "Preencha CEP (completo), endereço e bairro para continuar.";
         msg.style.display = "block";
         return;
       }
@@ -334,40 +446,36 @@ function configurarBotaoFinalizar() {
       atualizarResumoFrete();
     }
 
-    // Aviso antecipado do mínimo de atacado (o servidor valida de novo)
-    const unidadesAtacado = contarUnidadesAtacado(itensAtuais);
-    if (unidadesAtacado > 0) {
-      if (minimoAtacado === null) minimoAtacado = await obterMinimoAtacadoCarrinho();
-      if (unidadesAtacado < minimoAtacado) {
-        msg.textContent = `O pedido de atacado exige no mínimo ${minimoAtacado} unidades no carrinho (você tem ${unidadesAtacado}). Adicione mais itens ou mude-os para o varejo.`;
-        msg.classList.remove("sucesso");
-        msg.style.display = "block";
-        return;
-      }
+    if (!(await validarAntesDeFinalizar(msg))) {
+      msg.style.display = "block";
+      return;
     }
 
     btn.disabled = true;
     btn.textContent = "Criando pedido...";
 
     try {
-      const resultado = await criarPedido({
+      const pedidoRef = await criarPedido({
+        uidComprador: usuarioAtual.uid,
         itens: itensAtuais,
         modoEntrega,
         endereco
       });
 
-      // O servidor já esvaziou o carrinho.
-      msg.textContent = `Pedido criado! Total confirmado: ${formatarPreco(resultado.total)}. Redirecionando...`;
+      await esvaziarCarrinho(usuarioAtual.uid);
+
+      msg.textContent = "Pedido criado! Redirecionando para o pagamento...";
       msg.classList.add("sucesso");
       msg.style.display = "block";
 
       setTimeout(() => {
-        window.location.href = `pedido-confirmado.html?id=${encodeURIComponent(resultado.pedidoId)}`;
-      }, 1200);
+        window.location.href = `pedido-confirmado.html?id=${encodeURIComponent(pedidoRef.id)}`;
+      }, 1000);
     } catch (erro) {
       console.error(erro);
-      msg.textContent = traduzErroPedido(erro);
-      msg.classList.remove("sucesso");
+      msg.textContent = erro?.code === "permission-denied"
+        ? "Não foi possível criar o pedido — confirme seu e-mail e, para atacado, aguarde a aprovação da sua conta."
+        : "Não foi possível finalizar o pedido agora. Tente novamente.";
       msg.style.display = "block";
       btn.disabled = false;
       btn.textContent = "Finalizar compra";
@@ -379,5 +487,6 @@ function configurarBotaoFinalizar() {
 exigirLogin(async ({ usuario }) => {
   usuarioAtual = usuario;
   itensAtuais = await obterCarrinho(usuario.uid);
+  await carregarProdutosDoCarrinho();
   renderizarCarrinho();
 });

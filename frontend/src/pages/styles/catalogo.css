@@ -299,8 +299,11 @@
   .catalogo-filtros {
     position: static;
   }
-  .nav-busca-form {
-    display: none;
+  /* Grid 2×n no mobile (R2 4.3) — igual à vitrine da home. Sem isso o
+     auto-fill de 230px virava UMA coluna em telas estreitas. */
+  .catalogo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
   }
 }
 
@@ -513,6 +516,16 @@
   color: var(--text-main);
   font-family: 'Jost', sans-serif;
   font-size: 0.95rem;
+  /* R2 6.2: sem os spinners nativos do input[type=number] — a quantidade
+     é controlada pelos botões − / + ao lado. */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.produto-qtd-controle input::-webkit-outer-spin-button,
+.produto-qtd-controle input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .produto-acoes {
@@ -574,41 +587,3 @@
   }
 }
 
-/* ── Busca do catálogo no mobile (A1) ─────────────────────────────────
-   A busca da navbar some em telas <=900px; esta aparece no topo da
-   página de produtos para o celular. */
-.catalogo-busca-mobile {
-  display: none;
-  align-items: center;
-  margin-bottom: 1.2rem;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 0.55rem 1rem;
-  background: var(--surface);
-}
-.catalogo-busca-mobile:focus-within {
-  border-color: var(--gold);
-}
-.catalogo-busca-mobile input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: none;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.92rem;
-  color: var(--text-main);
-  min-width: 0;
-}
-.catalogo-busca-mobile button {
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-@media (max-width: 900px) {
-  .catalogo-busca-mobile {
-    display: flex;
-  }
-}

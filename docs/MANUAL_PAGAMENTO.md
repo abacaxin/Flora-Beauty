@@ -1,97 +1,56 @@
 # Manual do Sistema de Pagamento — Flora Beauty
 
-**Para:** Miguel (DMG) · **Atualizado em:** 10/07/2026
-**Objetivo:** explicar como o pagamento provisório funciona hoje e como configurar o pagamento definitivo na SUA conta, sem precisar compartilhar dados bancários com ninguém.
+**Para:** Miguel (DMG) · **Atualizado em:** rodada 2 (07/2026)
+**Princípio desta rodada: pagamento 100% GRATUITO** — sem gateway, sem mensalidade, sem plano pago do Firebase. O modelo é **PIX manual + confirmação via WhatsApp**, e é também a **camada final de segurança de preço** (ver seção 3).
 
 ---
 
-## 1. Como funciona HOJE (pagamento provisório)
+## 1. Como o pagamento funciona
 
-O checkout já funciona ponta a ponta:
+1. O cliente fecha o pedido no carrinho. O pedido é gravado **sem nenhum valor monetário** — só os produtos, quantidades e modo (varejo/atacado).
+2. A página **pedido-confirmado.html** calcula o total com os **preços atuais do catálogo** e mostra:
+   - a **chave PIX** da loja com botão "copiar";
+   - o botão **"Combinar pagamento no WhatsApp"** — um link `wa.me` (click-to-chat, **gratuito**, não é a API paga do WhatsApp) já com o número do pedido e o valor na mensagem.
+3. Você recebe a mensagem/comprovante, **abre o pedido no painel admin** (que deriva o total do catálogo do mesmo jeito) e **confere se o PIX recebido bate com o total mostrado**.
+4. Batendo, muda o status do pedido para `pago` e combina entrega/retirada.
 
-1. O cliente fecha o pedido no carrinho → a Cloud Function `criarPedido` valida tudo no servidor (preço, estoque, atacado, frete) e grava o pedido com `status: "aguardando_pagamento"` e `pagamento: { metodo: "provisorio", status: "pendente" }`.
-2. A página **pedido-confirmado.html** mostra ao cliente as instruções de pagamento:
-   - Chave **PIX** da loja (com botão "copiar") — se estiver configurada;
-   - Botão **"Combinar pagamento no WhatsApp"** com o número do pedido e o valor já preenchidos na mensagem.
-3. Você confere o comprovante e, no **painel admin → Pedidos**, muda o status do pedido para `pago` manualmente.
+## 2. Cadastrar a SUA chave PIX (passo a passo, sem mexer em código)
 
-### 1.1. Configurar a chave PIX (sem mexer em código)
+1. Abra o [Firebase Console](https://console.firebase.google.com) → projeto `flora-5754a` → **Firestore Database**.
+2. Na coleção **`configuracoes`**, crie (ou edite) um documento com o ID exatamente **`pagamento`**.
+3. Adicione os campos (tipo *string*):
 
-No [Firebase Console](https://console.firebase.google.com) → Firestore Database → coleção `configuracoes` → crie (ou edite) o documento com ID **`pagamento`**:
+| Campo        | Exemplo                                       | Obrigatório? |
+|--------------|-----------------------------------------------|--------------|
+| `pixChave`   | `98984853656` (celular, e-mail, CNPJ ou chave aleatória) | Sim — sem ele a página mostra só o WhatsApp |
+| `pixNome`    | `Flora Boutique`                              | Recomendado (o cliente confere o favorecido) |
+| `instrucoes` | `Envie o comprovante pelo WhatsApp para agilizar` | Opcional |
 
-| Campo        | Tipo   | Exemplo                                     |
-|--------------|--------|---------------------------------------------|
-| `pixChave`   | string | `98984853656` ou chave aleatória             |
-| `pixNome`    | string | `Flora Boutique LTDA`                        |
-| `instrucoes` | string | `Enviar comprovante pelo WhatsApp` (opcional)|
+4. Salve. A página de confirmação já passa a mostrar a chave — sem deploy.
 
-> Se o documento não existir, a página de confirmação mostra apenas o botão de WhatsApp — nada quebra.
+**QR Code estático (opcional, melhora a experiência):** gere no app do seu banco (a maioria tem "receber com QR") ou em geradores de "PIX copia-e-cola estático". Como o QR é uma imagem, você pode subir para um host de imagem e futuramente exibi-lo na página; por ora a chave copia-e-cola cobre o fluxo. *(Evolução registrada no ROADMAP.)*
 
-**Segurança:** esse documento é público para LEITURA (o cliente precisa ver a chave PIX), mas só o admin consegue escrever (regra em `firestore.rules`). Chave PIX é um dado de recebimento, não dá acesso à sua conta.
+**Segurança:** o documento `configuracoes/pagamento` é público para LEITURA (o cliente precisa ver a chave), e só o admin escreve (regra no `firestore.rules`). Chave PIX é dado de RECEBIMENTO — não dá acesso à sua conta.
 
----
+## 3. A conferência manual é parte da SEGURANÇA (leia!)
 
-## 2. Configurar o pagamento DEFINITIVO (Mercado Pago Checkout Pro)
+Sem servidor (plano Spark), o pedido não carrega valores e o total é derivado do catálogo — mas as quantidades vêm do cliente. **A trava final é você**: o painel admin mostra o total oficial derivado dos SEUS preços; se o PIX recebido não bater com esse total, **não envie o pedido**. O painel também exibe avisos automáticos (⚠) quando detecta algo estranho no pedido (ex.: item de atacado num pedido de varejo). Detalhes do risco residual: `docs/FALHAS_REMANESCENTES.md`.
 
-Recomendação: **Mercado Pago Checkout Pro** — o cliente paga numa página hospedada pelo Mercado Pago (PIX, cartão, boleto) e o site nunca vê número de cartão (isso mantém a loja fora do escopo PCI-DSS). Alternativas equivalentes: PagSeguro, Stripe, InfinitePay.
+## 4. Se um dia quiser um gateway (futuro, NÃO é necessário agora)
 
-### 2.1. Criar as credenciais (só você faz, na sua conta)
+Só considere opções **sem mensalidade**, que cobram apenas % por venda:
 
-1. Crie/acesse sua conta em <https://www.mercadopago.com.br>.
-2. Vá em **Seu negócio → Configurações → Credenciais** (ou <https://www.mercadopago.com.br/developers/panel/app> → criar aplicação).
-3. Anote o **Access Token de produção** (`APP_USR-...`). Existe também o de **teste** (`TEST-...`) — use o de teste primeiro.
-4. **NUNCA** coloque esse token no código do site (ele fica visível para qualquer visitante). Ele vai para um secret das Cloud Functions (passo 2.3).
+| Opção | Custo | Observação |
+|-------|-------|------------|
+| **Mercado Pago Checkout Pro** | ~4,98% por venda no cartão; PIX ~0,99% | Sem mensalidade. Confirmação automática exigiria backend (ver ROADMAP) |
+| **PagBank / InfinitePay links de pagamento** | % por venda | Link de pagamento gerado manualmente por pedido — funciona até SEM backend, mas é trabalho manual seu |
+| **PIX direto (atual)** | **R$ 0** para você (pessoa física/MEI) | O modelo desta rodada |
 
-### 2.2. O que será criado no código (roteiro para a implementação)
+> ⚠️ A confirmação AUTOMÁTICA de pagamento (webhook) exige um backend — hoje descartado pela restrição de custo zero. Com o modelo atual, a confirmação é manual e isso está ok para o volume da loja.
 
-Duas Cloud Functions novas em `functions/index.js`:
+## 5. Checklist
 
-1. **`criarPreferenciaPagamento`** (callable) — chamada depois do `criarPedido`:
-   - lê o pedido do Firestore (nunca confia em valores do cliente);
-   - chama a API do Mercado Pago criando uma *preference* com o total do pedido;
-   - grava `pagamento.preferenciaId` no pedido e devolve a URL de checkout (`init_point`);
-   - o front redireciona o cliente para essa URL.
-2. **`webhookMercadoPago`** (HTTP) — o Mercado Pago chama essa URL quando o pagamento muda de status:
-   - valida a notificação (consultando a API com o `payment_id` recebido — nunca confie só no corpo do webhook);
-   - se aprovado → `status: "pago"` e `pagamento.status: "aprovado"` no pedido;
-   - se recusado/cancelado → `status: "cancelado"` e **devolve o estoque** (a função `criarPedido` já reservou).
-
-### 2.3. Guardar o token com segurança
-
-```bash
-# na pasta do projeto (exige Firebase CLI logado no projeto)
-firebase functions:secrets:set MP_ACCESS_TOKEN
-# cole o token quando pedir; depois referencie no código com defineSecret("MP_ACCESS_TOKEN")
-```
-
-### 2.4. Registrar o webhook
-
-No painel do Mercado Pago → sua aplicação → **Webhooks** → adicionar URL:
-
-```
-https://southamerica-east1-<SEU-PROJETO>.cloudfunctions.net/webhookMercadoPago
-```
-
-Marque o evento **Pagamentos**. Guarde a **assinatura secreta** do webhook (o Mercado Pago mostra) num secret `MP_WEBHOOK_SECRET`, para validar que a chamada é legítima.
-
-### 2.5. Testar antes de ir para produção
-
-1. Use o Access Token **de teste** + contas de teste do painel do Mercado Pago.
-2. Faça um pedido no site, pague com o cartão de teste `5031 4332 1540 6351` (aprovação garantida em sandbox).
-3. Confirme que o pedido muda sozinho para `pago` no painel admin.
-4. Só então troque o secret para o token de produção e repita um pagamento real de valor baixo (ex.: R$ 1,00 via PIX) e estorne.
-
----
-
-## 3. Checklist final
-
-- [ ] Documento `configuracoes/pagamento` criado com a chave PIX (provisório — já dá para vender)
-- [ ] Conta Mercado Pago criada e verificada
-- [ ] Access Token de teste guardado como secret (`MP_ACCESS_TOKEN`)
-- [ ] Functions `criarPreferenciaPagamento` + `webhookMercadoPago` implementadas e deployadas
-- [ ] Webhook registrado no painel do Mercado Pago
-- [ ] Pagamento de teste aprovado muda o pedido para `pago` sozinho
-- [ ] Token de produção configurado e teste real feito
-- [ ] Estorno testado (pedido volta para `cancelado` e estoque é devolvido)
-
-> **Importante:** o pagamento provisório continua funcionando como fallback mesmo depois do gateway — se o gateway cair, você ainda recebe pedidos e combina o pagamento manualmente.
+- [ ] Documento `configuracoes/pagamento` criado com a sua chave PIX
+- [ ] Teste ponta a ponta: pedido → página de confirmação mostra chave e valor → mensagem chega no WhatsApp da loja
+- [ ] Rotina combinada: conferir o total no painel admin ANTES de aceitar o comprovante
+- [ ] (Opcional) QR estático gerado no app do banco para enviar pelo WhatsApp

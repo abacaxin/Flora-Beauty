@@ -12,7 +12,8 @@ import {
   filtrarProdutos,
   ordenarProdutos,
   infoPreco,
-  estoquePorModo
+  estoquePorModo,
+  disponivelNoModo
 } from "../services/produtos.js";
 import { listarCategorias } from "../services/categorias.js";
 import { escapeHtml, urlImagemSegura } from "../services/seguranca.js";
@@ -23,8 +24,6 @@ const contagem = document.getElementById("catalogo-contagem");
 const selectOrdenar = document.getElementById("select-ordenar");
 const buscaInput = document.getElementById("nav-busca-input");
 const buscaForm = document.getElementById("nav-busca-form");
-const buscaMobileForm = document.getElementById("catalogo-busca-form");
-const buscaMobileInput = document.getElementById("catalogo-busca-input");
 const filtroCategoriasLista = document.getElementById("filtro-categorias-lista");
 const dropdownCategoriasLista = document.getElementById("dropdown-categorias-lista");
 const inputPrecoMin = document.getElementById("filtro-preco-min");
@@ -51,7 +50,6 @@ const params = new URLSearchParams(window.location.search);
 categoriaAtual = params.get("categoria") || "";
 termoBusca = params.get("busca") || "";
 if (buscaInput) buscaInput.value = termoBusca;
-if (buscaMobileInput) buscaMobileInput.value = termoBusca;
 
 // ── Monta a lista de categorias nos filtros e no dropdown da navbar ──────
 async function montarCategorias() {
@@ -95,6 +93,7 @@ function formatarPreco(valor) {
 }
 
 function cardProduto(p) {
+  const temVarejo = disponivelNoModo(p, "varejo");
   const preco = infoPreco(p, "varejo");
   const estoque = estoquePorModo(p, "varejo");
 
@@ -106,12 +105,14 @@ function cardProduto(p) {
       </div>
       <div class="catalogo-card-info">
         <h3 class="catalogo-card-nome">${escapeHtml(p.nome)}</h3>
-        <span class="catalogo-card-preco">
-          ${formatarPreco(preco.precoFinal)}
-          ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
-        </span>
+        ${temVarejo ? `
+          <span class="catalogo-card-preco">
+            ${formatarPreco(preco.precoFinal)}
+            ${preco.temDesconto ? `<span class="preco-antigo">${formatarPreco(preco.precoOriginal)}</span>` : ""}
+          </span>
+        ` : `<span class="catalogo-card-preco">Exclusivo atacado</span>`}
         ${p.precoAtacado ? `<span class="catalogo-card-preco-atacado">Atacado: ${formatarPreco(Number(p.precoAtacado))}/un</span>` : ""}
-        ${estoque <= 0 ? `<span class="catalogo-card-estoque">Fora de estoque</span>` : ""}
+        ${temVarejo && estoque <= 0 ? `<span class="catalogo-card-estoque">Fora de estoque</span>` : ""}
       </div>
     </a>
   `;
@@ -225,7 +226,6 @@ if (sentinela) {
 function aoBuscar(termo) {
   termoBusca = termo.trim();
   if (buscaInput) buscaInput.value = termoBusca;
-  if (buscaMobileInput) buscaMobileInput.value = termoBusca;
   reiniciarCatalogo();
 }
 
@@ -234,11 +234,6 @@ buscaForm?.addEventListener("submit", (evento) => {
   aoBuscar(buscaInput.value);
 });
 
-// Busca visível no mobile (A1): mesmo comportamento da busca da navbar.
-buscaMobileForm?.addEventListener("submit", (evento) => {
-  evento.preventDefault();
-  aoBuscar(buscaMobileInput.value);
-});
 
 selectOrdenar.addEventListener("change", () => {
   if (modoFiltroCompleto) {
@@ -262,7 +257,6 @@ btnLimparFiltros.addEventListener("click", () => {
   precoMax = null;
   categoriaAtual = "";
   if (buscaInput) buscaInput.value = "";
-  if (buscaMobileInput) buscaMobileInput.value = "";
   inputPrecoMin.value = "";
   inputPrecoMax.value = "";
   selectOrdenar.value = "relevancia";
