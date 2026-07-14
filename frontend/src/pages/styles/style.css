@@ -1392,7 +1392,9 @@ body[data-theme="light"] .social-btn {
     text-align: center;
     justify-content: center;
   }
-
+   #search{
+    display: none;
+   }
   .categories {
     flex-direction: column;
     padding: 3rem 1rem;
@@ -1844,8 +1846,8 @@ body[data-theme="light"] .social-btn {
   }
 
   .nav-logo img {
-    width: 64px;
-    height: 44px;
+    width: 54px;
+    height: 34px;
     object-fit: contain;
   }
 
