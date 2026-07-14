@@ -402,7 +402,10 @@ body[data-theme="light"] .theme-toggle:hover {
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center;
+  /* Fotos de divulgação costumam ser em RETRATO: no desktop (tela larga)
+     o "cover" corta muito — priorizar o TERÇO SUPERIOR mantém rosto/busto
+     visíveis em vez de decapitar a modelo. */
+  background-position: center 22%;
   opacity: 0;
   transform: scale(1.04);
   transition: opacity 1.1s ease, transform 6s ease;
@@ -962,14 +965,14 @@ body[data-theme="light"] .theme-toggle:hover {
 
 .highlight-visual {
   position: relative;
-  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* sem aspect-ratio fixo: a altura acompanha o círculo (menos vazio) */
 }
 .highlight-circle {
-  width: 300px;
-  height: 300px;
+  width: min(320px, 70vw);
+  height: min(320px, 70vw);
   border-radius: 50%;
   border: 0.5px solid rgba(123, 102, 43, 0.2);
   display: flex;
@@ -977,9 +980,14 @@ body[data-theme="light"] .theme-toggle:hover {
   justify-content: center;
   font-size: 9rem;
   position: relative;
+  /* A imagem do produto é recortada DENTRO do círculo e centralizada —
+     antes ela vazava retangular e desalinhada no desktop. */
+  overflow: hidden;
 }
 .highlight-circle img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .highlight-circle::before {
   content: '';

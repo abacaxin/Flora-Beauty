@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "flora-static",
-      "runtimeExecutable": "python",
+      "runtimeExecutable": "C:\\Users\\softw\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
       "runtimeArgs": ["-m", "http.server", "5500", "--directory", "frontend/src/pages"],
       "port": 5500
     }
